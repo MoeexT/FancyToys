@@ -15,12 +15,7 @@
                         Height="Auto"
                         Width="Auto"
                         PaneTitle="FancyToys"
-                        
-                        
-                        SelectionChanged="NavViewSelectionChanged"
-                        >
-            <!--
-            PaneDisplayMode="Left"
+                        PaneDisplayMode="Left"
                         ExpandedModeThresholdWidth="150"
                         IsTitleBarAutoPaddingEnabled="False"
                         IsPaneOpen="True"
@@ -33,11 +28,13 @@
                         FontSize="12"
                         FontStyle="Normal"
                         FontWeight="Normal"
-            
-            ItemInvoked="NavView_ItemInvoked"
-                        Loaded="NavView_Loaded"
-                        GettingFocus="NavView_GettingFocus"-->
-            <!---->
+                        SelectionChanged="NavViewSelectionChanged"
+                        >
+            <!--
+                ItemInvoked="NavView_ItemInvoked"
+                Loaded="NavView_Loaded"
+                GettingFocus="NavView_GettingFocus"
+            -->
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem x:Name="Nursery"
                                     Tag="Nursery"

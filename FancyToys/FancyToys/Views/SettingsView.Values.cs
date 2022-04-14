@@ -1,6 +1,7 @@
 ﻿using System;
 
 using FancyToys.Logging;
+using FancyToys.Utils;
 
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml;
@@ -12,6 +13,8 @@ namespace FancyToys.Views {
         public double OpacitySliderValue {
             get => (double)(LocalSettings.Values[nameof(OpacitySliderValue)] ?? 0.6);
             set {
+                Dogger.Info($"OpacitySliderValue: {value}");
+                Notifier.Notify(Notifier.Keys.ServerPanelOpacity, value);
                 LocalSettings.Values[nameof(OpacitySliderValue)] = value;
                 OnSettingChanged?.Invoke(LocalSettings, nameof(OpacitySliderValue));
             }
@@ -41,8 +44,6 @@ namespace FancyToys.Views {
             set {
                 Dogger.Level = value;
                 LocalSettings.Values[nameof(LogLevel)] = value.ToString();
-
-                throw new NotImplementedException();
                 OnSettingChanged?.Invoke(LocalSettings, nameof(LogLevel));
             }
         }
@@ -50,9 +51,8 @@ namespace FancyToys.Views {
         public StdType StdLevel {
             get => Enum.Parse<StdType>(LocalSettings.Values[nameof(StdLevel)] as string ?? StdType.Output.ToString());
             set {
+                StdLogger.Level = value;
                 LocalSettings.Values[nameof(StdLevel)] = value.ToString();
-                throw new NotImplementedException();
-                
                 OnSettingChanged?.Invoke(LocalSettings, nameof(StdLevel));
             }
         }

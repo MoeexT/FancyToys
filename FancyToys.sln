@@ -5,7 +5,12 @@ VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "FancyToys (Package)", "FancyToys\FancyToys (Package)\FancyToys (Package).wapproj", "{D87B35AE-4CC0-4DEC-BB98-2547EDE39D2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancyToys", "FancyToys\FancyToys\FancyToys.csproj", "{024BE645-A0E5-454A-93EB-55D9DBB68F0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FancyToys", "FancyToys\FancyToys\FancyToys.csproj", "{024BE645-A0E5-454A-93EB-55D9DBB68F0A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8290E49-7B43-49D2-BDBF-AE7769843E23}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

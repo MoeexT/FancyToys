@@ -5,6 +5,7 @@
     xmlns:local="using:FancyToys.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    NavigationCacheMode="Required"
     mc:Ignorable="d">
 
     <Grid>
@@ -19,7 +20,7 @@
                     BorderThickness="1"
                     BorderBrush="Gray">
                     <Border.Background>
-                        <SolidColorBrush Color="Black" />
+                        <SolidColorBrush Color="Black" Opacity="{x:Bind FancyToysPanelOpacity, Mode=OneWay}" />
                     </Border.Background>
                     <ScrollViewer Name="FancyToysScrollViewer" VerticalScrollBarVisibility="Auto">
                         <RichTextBlock Name="FancyToysPanel"

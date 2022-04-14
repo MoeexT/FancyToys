@@ -54,8 +54,6 @@ namespace FancyToys {
                 ContentFrame.Navigate(typeof(SettingsView));
             } else {
                 var selectedItem = (muxc.NavigationViewItem)args.SelectedItem;
-                Debug.WriteLine(views[selectedItem.Name]);
-
                 ContentFrame.Navigate(views[selectedItem.Name]);
             }
         }
