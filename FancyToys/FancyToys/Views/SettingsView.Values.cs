@@ -31,9 +31,9 @@ namespace FancyToys.Views {
         public ElementTheme CurrentTheme {
             get => Enum.Parse<ElementTheme>(LocalSettings.Values[nameof(CurrentTheme)] as string ?? ElementTheme.Default.ToString());
             set {
-                //if (Window.Current.Content is not FrameworkElement framework) return;
-                //if (SystemThemeButton.XamlRoot.Content is not FrameworkElement framework) return;
-                //NavView.RequestedTheme = value;
+                if (MainWindow.CurrentWindow.Content is FrameworkElement fe) {
+                     fe.RequestedTheme = value;
+                }
                 LocalSettings.Values[nameof(CurrentTheme)] = value.ToString();
                 OnSettingChanged?.Invoke(LocalSettings, nameof(CurrentTheme));
             }
