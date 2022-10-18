@@ -11,25 +11,32 @@
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        
+        <Grid.Resources>
+            <CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>
+            <Thickness x:Key="NavigationViewHeaderMargin">0</Thickness>
+            <Thickness x:Key="NavigationViewContentPresenterMargin">0</Thickness>
+        </Grid.Resources> 
+        
         <muxc:NavigationView x:Name="NavView"
-                        Height="Auto"
-                        Width="Auto"
-                        PaneTitle="FancyToys"
-                        PaneDisplayMode="Left"
-                        ExpandedModeThresholdWidth="150"
-                        IsTitleBarAutoPaddingEnabled="False"
-                        IsPaneOpen="True"
-                        IsBackButtonVisible="Collapsed"
-                        IsPaneToggleButtonVisible="True"
-                        OpenPaneLength="160"
-                        SelectionFollowsFocus="Enabled"
-                        IsSettingsVisible="True"
-                        FontFamily="Microsoft YaHei UI Light"
-                        FontSize="12"
-                        FontStyle="Normal"
-                        FontWeight="Normal"
-                        SelectionChanged="NavViewSelectionChanged"
-                        >
+                             Height="Auto"
+                             Width="Auto"
+                             PaneTitle="FancyToys"
+                             PaneDisplayMode="Left"
+                             ExpandedModeThresholdWidth="150"
+                             IsTitleBarAutoPaddingEnabled="False"
+                             IsPaneOpen="True"
+                             IsBackButtonVisible="Collapsed"
+                             IsPaneToggleButtonVisible="True"
+                             OpenPaneLength="160"
+                             SelectionFollowsFocus="Enabled"
+                             IsSettingsVisible="True"
+                             FontFamily="Microsoft YaHei UI Light"
+                             FontSize="12"
+                             FontStyle="Normal"
+                             FontWeight="Normal"
+                             SelectionChanged="NavViewSelectionChanged"
+        >
             <!--
                 ItemInvoked="NavView_ItemInvoked"
                 Loaded="NavView_Loaded"

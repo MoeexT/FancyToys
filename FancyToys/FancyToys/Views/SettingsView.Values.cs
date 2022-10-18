@@ -42,7 +42,7 @@ namespace FancyToys.Views {
         public LogLevel LogLevel {
             get => Enum.Parse<LogLevel>(LocalSettings.Values[nameof(LogLevel)] as string ?? LogLevel.Info.ToString());
             set {
-                Dogger.Level = value;
+                Dogger.LogLevel = value;
                 LocalSettings.Values[nameof(LogLevel)] = value.ToString();
                 OnSettingChanged?.Invoke(LocalSettings, nameof(LogLevel));
             }
@@ -51,7 +51,7 @@ namespace FancyToys.Views {
         public StdType StdLevel {
             get => Enum.Parse<StdType>(LocalSettings.Values[nameof(StdLevel)] as string ?? StdType.Output.ToString());
             set {
-                StdLogger.Level = value;
+                Dogger.Stdlevel = value;
                 LocalSettings.Values[nameof(StdLevel)] = value.ToString();
                 OnSettingChanged?.Invoke(LocalSettings, nameof(StdLevel));
             }

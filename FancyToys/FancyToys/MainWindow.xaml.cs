@@ -27,6 +27,8 @@ namespace FancyToys {
         private readonly Dictionary<string, Type> views;
         private const string _logFileName = "fancy_toys.log";
 
+        public static MainWindow CurrentWindow { get; private set; }
+        
         public MainWindow() {
             this.InitializeComponent();
 
@@ -47,6 +49,7 @@ namespace FancyToys {
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logFile);
             NLog.LogManager.Configuration = config;
             Dogger.Info("FancyToys started.");
+            CurrentWindow = this;
         }
 
         private void NavViewSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args) {

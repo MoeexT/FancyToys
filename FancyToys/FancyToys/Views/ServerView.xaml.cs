@@ -28,21 +28,21 @@ namespace FancyToys.Views {
     /// </summary>
     public sealed partial class ServerView: Page {
         public static ServerView CurrentInstance { get; private set; }
-        private double FancyToysPanelOpacity;
+        private double FancyToysPanelOpacity { get; set; }
 
         public unsafe ServerView() {
             InitializeComponent();
             CurrentInstance = this;
 
-            fixed (double* p = &FancyToysPanelOpacity) {
-                Notifier.Subscribe(Notifier.Keys.ServerPanelOpacity, p);
-            }
+            Notifier.Subscribe(Notifier.Keys.ServerPanelOpacity, (double opacity) => {
+                FancyToysPanelOpacity = opacity;
+            });
         }
 
         public async void PrintLog(LogStruct ls) {
             Debug.WriteLine("PrintLog");
 
-            DispatcherQueue.GetForCurrentThread().TryEnqueue(() => {
+            DispatcherQueue.TryEnqueue(() => {
                 Color color = Consts.LogForegroundColors[ls.Level];
                 bool highlight = Consts.HighlightedLogLevels.Contains(ls.Level);
                 FontWeight weight = highlight ? FontWeights.Bold : FontWeights.Normal;
@@ -68,7 +68,7 @@ namespace FancyToys.Views {
         }
 
         public void PrintStd(StdStruct ss) {
-            DispatcherQueue.GetForCurrentThread().TryEnqueue(() => {
+            DispatcherQueue.TryEnqueue(() => {
                 Paragraph p = new();
 
                 Run src = new() {
@@ -85,13 +85,10 @@ namespace FancyToys.Views {
                 p.Inlines.Add(msg);
                 FancyToysPanel.Blocks.Add(p);
             });
-
-
         }
 
         private void FancyToysPanelLoaded(object sender, RoutedEventArgs e) {
             Dogger.Flush();
-            StdLogger.Flush();
         }
     }
 

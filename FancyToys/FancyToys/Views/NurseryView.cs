@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Windows.ApplicationModel.DataTransfer;
-using Windows.UI.Core;
 
 using FancyToys.Controls.Dialogs;
 using FancyToys.Logging;
@@ -16,45 +16,74 @@ using Microsoft.UI.Xaml.Controls;
 namespace FancyToys.Views {
 
     public partial class NurseryView {
-        private void TryAdd(string pathName) {
-            _processManager.Add(pathName);
-        }
 
-        public async void Add(int pid, string pathName) {
-            Dogger.Trace($"add {pid} {pathName}");
-            NurseryInfoMap[pid] = new NurseryInfo();
+        /// <summary>
+        /// Initialize a new bored process, and create a ToggleSwitch represents this process showing at frontend.
+        /// </summary>
+        /// <param name="pathName"></param>
+        private void Add(string pathName) {
+            if (!File.Exists(pathName)) {
+                Dogger.Error($"No such file: ${pathName}");
+                return;
+            }
 
-            ToggleSwitch ts = NewSwitch(pid, pathName);
+            NurseryItem item = new(pathName, Path.GetFileName(pathName));
+            NurseryProcesses[item.NurseryId] = item;
+
+            ToggleSwitch ts = NewSwitch(item.NurseryId, pathName);
+            item.Switch = ts;
             ProcessSwitchList.Items.Add(ts);
+
+            item.OnProcessExited += (i) => {
+                DispatcherQueue.TryEnqueue(() => {
+                        ts.IsOn = false;
+                    }
+                );
+            };
+            Dogger.Trace($"add {item.NurseryId} {pathName}");
         }
 
-        private async void TryRemove(int pid) {
-            if (!NurseryInfoMap.TryGetValue(pid, out NurseryInfo ni)) return;
+        private async void Launch(NurseryItem item) {
+            // if (!await Task.Run(item.Launch)) {
+            //     return;
+            // }
+            //
+            // _informationManager.run();
+            await Task.Run(() => {
+                    item.Launch();
+                    _informationManager.run();
+                }
+            );
+        }
+
+        private void Stop(NurseryItem item) {
+            if (item.IsRunning) {
+                Task.Run(item.Stop);
+            }
+        }
+
+        private async void Remove(int pid) {
+            if (!NurseryProcesses.TryGetValue(pid, out NurseryItem item)) return;
             bool confirm = true;
 
-            if (ni.Twitch.IsOn) {
+            if (item.Switch.IsOn) {
                 confirm &= await MessageDialog.Warn("进程未退出", "继续操作可能丢失工作内容", "仍然退出");
             }
             if (!confirm) return;
 
-            _processManager.Remove(pid);
+            ProcessSwitchList.Items!.Remove(item.Switch);
+            NurseryProcesses.Remove(pid);
+
+            // dispose the process instance
+            item.Dispose();
         }
 
-        public async void Remove(int pid) {
-            if (NurseryInfoMap.ContainsKey(pid)) {
-                ProcessSwitchList.Items!.Remove(NurseryInfoMap[pid].Twitch);
-                NurseryInfoMap.Remove(pid);
-            } else {
-                Dogger.Fatal($"NurseryInfoMap doesn't contain {pid}");
-            }
-        }
-
-        public async void ToggleSwitch(int pid, bool isOn) {
-            if (NurseryInfoMap.TryGetValue(pid, out NurseryInfo ni) && ni.Twitch.IsOn != isOn) {
-                ni.Twitch.IsOn = isOn;
-            }
-        }
-
+        /// <summary>
+        /// generate a ToggleSwitch for showing at frontend.
+        /// </summary>
+        /// <param name="pid"></param>
+        /// <param name="pathName"></param>
+        /// <returns></returns>
         private ToggleSwitch NewSwitch(int pid, string pathName) {
             string pn = Path.GetFileName(pathName);
 
@@ -69,13 +98,20 @@ namespace FancyToys.Views {
             ToolTipService.SetToolTip(twitch, pathName);
 
             twitch.Toggled += (sender, e) => {
-                if (sender is not ToggleSwitch ts) return;
-                if (!NurseryInfoMap.TryGetValue(pid, out NurseryInfo ni)) return;
+                if (sender is not ToggleSwitch ts) {
+                    Dogger.Debug($"Sender not ToggleSwitch{sender}");
+                    return;
+                }
+                Dogger.Info($"Toggle: {ts.IsOn}");
+                if (!NurseryProcesses.TryGetValue(pid, out NurseryItem item)) return;
 
-                if (!ni.ServerStart && ts.IsOn) _processManager.Launch(pid);
-                else if (!ni.ServerStop && !ts.IsOn) _processManager.Stop(pid);
+                if (ts.IsOn) {
+                    Launch(item);
+                } else {
+                    Stop(item);
+                }
             };
-            NurseryInfoMap[pid].Twitch = twitch;
+            // NurseryProcesses[pid].Switch = twitch;
 
             return twitch;
         }
@@ -110,7 +146,7 @@ namespace FancyToys.Views {
             };
 
             ri.Click += (s, e) => {
-                TryRemove(pid);
+                Remove(pid);
             };
 
             menu.Items.Add(ai);
@@ -120,39 +156,39 @@ namespace FancyToys.Views {
             return menu;
         }
 
-        public void UpdateProcessInformation(List<NurseryInformationStruct> nisList) {
-            var rmList = new List<ProcessInformation>();
-            var insDict = new Dictionary<int, NurseryInformationStruct>();
+        public void UpdateProcessInformation(Dictionary<int, ProcessStatistic> alivePs) {
+            DispatcherQueue.TryEnqueue(() => {
+                var deleteList = new List<ProcessStatistic>();
 
-            foreach (NurseryInformationStruct nis in nisList) {
-                insDict[nis.Id] = nis;
-            }
-
-            foreach (ProcessInformation pi in ProcessInfoList) {
-                if (insDict.TryGetValue(pi.PID, out NurseryInformationStruct si)) {
-                    pi.SetCPU(si.CPU);
-                    pi.SetMemory(si.Memory);
-                    insDict.Remove(pi.PID);
-                } else {
-                    rmList.Add(pi);
+                // update
+                foreach (ProcessStatistic pi in ProcessInfoList) {
+                    if (alivePs.TryGetValue(pi.GetNurseryId(), out ProcessStatistic ps)) {
+                        pi.SetCPU(ps.cpu);
+                        pi.SetMemory(ps.memory);
+                        alivePs.Remove(pi.GetNurseryId());
+                    } else {
+                        deleteList.Add(pi);
+                    }
                 }
-            }
 
-            foreach (ProcessInformation rp in rmList) {
-                ProcessInfoList.Remove(rp);
-            }
+                // delete
+                foreach (ProcessStatistic rp in deleteList) {
+                    ProcessInfoList.Remove(rp);
+                }
 
-            foreach (NurseryInformationStruct si in insDict.Values) {
-                ProcessInfoList.Add(new ProcessInformation(si));
-            }
+                // insert
+                foreach (ProcessStatistic si in alivePs.Values) {
+                    ProcessInfoList.Add(si);
+                }
+            });
         }
 
-        private void SortData(Comparison<ProcessInformation> comparison) {
-            var sortableList = new List<ProcessInformation>(ProcessInfoList);
+        private void SortData(Comparison<ProcessStatistic> comparison) {
+            var sortableList = new List<ProcessStatistic>(ProcessInfoList);
             sortableList.Sort(comparison);
             ProcessInfoList.Clear();
 
-            foreach (ProcessInformation pi in sortableList) {
+            foreach (ProcessStatistic pi in sortableList) {
                 ProcessInfoList.Add(pi);
             }
         }

@@ -9,7 +9,7 @@ using FancyToys.Logging;
 using Newtonsoft.Json;
 
 
-namespace FancyToys.Utils {
+namespace FancyToys.Utils { 
 
     public static class Converter {
 

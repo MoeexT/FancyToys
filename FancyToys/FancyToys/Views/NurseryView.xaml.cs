@@ -27,19 +27,18 @@ namespace FancyToys.Views {
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class NurseryView: Page {
-        private ObservableCollection<ProcessInformation> ProcessInfoList { get; }
-
-        public Dictionary<int, NurseryInfo> NurseryInfoMap { get; }
+        // 进程资源信息
+        private ObservableCollection<ProcessStatistic> ProcessInfoList { get; }
+        // 进程控件信息
+        public Dictionary<int, NurseryItem> NurseryProcesses { get; }
         
-        private readonly ProcessManager _processManager;
         private readonly InformationManager _informationManager;
 
         public NurseryView() {
             InitializeComponent();
-            ProcessInfoList = new ObservableCollection<ProcessInformation>();
-            NurseryInfoMap = new Dictionary<int, NurseryInfo>();
-            _processManager = new ProcessManager();
-            _informationManager = new InformationManager(this, _processManager);
+            ProcessInfoList = new ObservableCollection<ProcessStatistic>();
+            NurseryProcesses = new Dictionary<int, NurseryItem>();
+            _informationManager = new InformationManager(this);
         }
 
         private async void DropAreaDrop(object sender, DragEventArgs e) {
@@ -54,7 +53,7 @@ namespace FancyToys.Views {
 
                 foreach (IStorageItem item in files) {
                     if (item.Name.EndsWith(".exe")) {
-                        TryAdd(item.Path);
+                        Add(item.Path);
                     }
                 }
             } finally {
@@ -81,7 +80,7 @@ namespace FancyToys.Views {
 
             // TODO: 可能选择多个文件
             if (file != null) {
-                TryAdd(file.Path);
+                Add(file.Path);
             }
         }
 
@@ -90,7 +89,8 @@ namespace FancyToys.Views {
 
             foreach (ToggleSwitch ts in ProcessSwitchList.Items) {
                 if (ts.IsOn) {
-                    _processManager.Stop((int)ts.Tag);
+                    NurseryItem ni = NurseryProcesses[(int)ts.Tag];
+                    ni.Stop();
                 }
             }
         }
@@ -99,7 +99,7 @@ namespace FancyToys.Views {
             if (ProcessSwitchList.Items == null) return;
 
             foreach (ToggleSwitch ts in ProcessSwitchList.Items) {
-                TryRemove((int)ts.Tag);
+                Remove((int)ts.Tag);
             }
         }
 
@@ -117,12 +117,13 @@ namespace FancyToys.Views {
             }
 
             int pid = (int)ai.Tag;
-            InputDialog inputDialog = new("Nursery", "输入参数", NurseryInfoMap[pid].Args ?? string.Empty);
+            NurseryItem ni = NurseryProcesses[pid];
+            
+            InputDialog inputDialog = new("Nursery", "输入参数", ni.Ps.StartInfo.Arguments);
             await inputDialog.ShowAsync();
 
             if (inputDialog.isSaved) {
-                NurseryInfoMap[pid].Args = inputDialog.inputContent;
-                _processManager.PatchArgs(pid, inputDialog.inputContent);
+                ni.Ps.StartInfo.Arguments = inputDialog.inputContent;
             }
         }
 
@@ -140,16 +141,16 @@ namespace FancyToys.Views {
         private void ProcessGridSorting(object sender, DataGridColumnEventArgs e) {
             switch (e.Column.Header.ToString()) {
                 case "Process":
-                    if (e.Column.SortDirection == null || e.Column.SortDirection == DataGridSortDirection.Descending) {
-                        SortData((x, y) => x.Process.CompareTo(y.Process));
+                    if (e.Column.SortDirection is null or DataGridSortDirection.Descending) {
+                        SortData((x, y) => string.Compare(x.Process, y.Process, StringComparison.Ordinal));
                         e.Column.SortDirection = DataGridSortDirection.Ascending;
                     } else {
-                        SortData((x, y) => -x.Process.CompareTo(y.Process));
+                        SortData((x, y) => -string.Compare(x.Process, y.Process, StringComparison.Ordinal));
                         e.Column.SortDirection = DataGridSortDirection.Descending;
                     }
                     break;
                 case "PID":
-                    if (e.Column.SortDirection == null || e.Column.SortDirection == DataGridSortDirection.Descending) {
+                    if (e.Column.SortDirection is null or DataGridSortDirection.Descending) {
                         SortData((x, y) => x.PID - y.PID);
                         e.Column.SortDirection = DataGridSortDirection.Ascending;
                     } else {
@@ -158,7 +159,7 @@ namespace FancyToys.Views {
                     }
                     break;
                 case "CPU":
-                    if (e.Column.SortDirection == null || e.Column.SortDirection == DataGridSortDirection.Descending) {
+                    if (e.Column.SortDirection is null or DataGridSortDirection.Descending) {
                         SortData((x, y) => (int)(x.cpu - y.cpu));
                         e.Column.SortDirection = DataGridSortDirection.Ascending;
                     } else {
@@ -167,11 +168,11 @@ namespace FancyToys.Views {
                     }
                     break;
                 case "Memory":
-                    if (e.Column.SortDirection == null || e.Column.SortDirection == DataGridSortDirection.Descending) {
-                        SortData((x, y) => x.memory - y.memory);
+                    if (e.Column.SortDirection is null or DataGridSortDirection.Descending) {
+                        SortData((x, y) => (int)(x.memory - y.memory));
                         e.Column.SortDirection = DataGridSortDirection.Ascending;
                     } else {
-                        SortData((x, y) => y.memory - x.memory);
+                        SortData((x, y) => (int)(y.memory - x.memory));
                         e.Column.SortDirection = DataGridSortDirection.Descending;
                     }
                     break;

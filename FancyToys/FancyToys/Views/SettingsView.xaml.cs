@@ -52,6 +52,7 @@ namespace FancyToys.Views {
         }
 
         private void InitializeDefaultSettings() {
+            LogLevel = LogLevel.Trace;
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
                     DarkThemeButton.IsChecked = true;
@@ -94,7 +95,7 @@ namespace FancyToys.Views {
             Brush originHeaderForeground = header!.Foreground;
             StdLevelComboBox.Foreground = item!.Foreground;
             header.Foreground = originHeaderForeground;
-            StdLogger.Level = item.Content is null ? StdLevel : (StdType)item.Content;
+            Dogger.Stdlevel = item.Content is null ? StdLevel : (StdType)item.Content;
         }
 
         private int IndexOfLogLevels() {

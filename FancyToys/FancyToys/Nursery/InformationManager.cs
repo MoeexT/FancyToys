@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using FancyToys.Logging;
@@ -17,71 +18,73 @@ namespace FancyToys.Nursery {
         private const int minSpan = 20;
         private const int maxSpan = 5000;
         private readonly NurseryView _nurseryView;
-        private readonly ProcessManager _processManager;
+        private static readonly object _lock = new();
+        private bool _working;
 
         public int UpdateSpan {
             get => updateSpan;
-            set =>
-                updateSpan = value < minSpan ? minSpan : value > maxSpan ? maxSpan : value;
+            set => updateSpan = value < minSpan ? minSpan : value > maxSpan ? maxSpan : value;
         }
 
-        public InformationManager(NurseryView nurseryView, ProcessManager processManager) {
+        public InformationManager(NurseryView nurseryView) {
             _nurseryView = nurseryView;
-            _processManager = processManager;
         }
 
         public void run() {
-            Task.Run(
-                async () => {
-                    bool shouldClear = false;
-                    List<NurseryInformationStruct> infoList = new();
+            Task.Run(() => {
+                CancellationTokenSource source = new();
 
-                    while (true) {
-                        try {
-                            Fetch(infoList);
-
-                            if (infoList.Count > 0) {
-                                _nurseryView.UpdateProcessInformation(infoList);
-                                infoList.Clear();
-                                shouldClear = true;
-                            } else {
-                                if (shouldClear) {
-                                    _nurseryView.UpdateProcessInformation(infoList);
-                                    shouldClear = false;
-                                }
-                            }
-                            await Task.Delay(updateSpan);
-                        } catch (Exception e) {
-                            Dogger.Error(e.ToString());
-                            await Task.Delay(updateSpan);
-                        }
+                lock (_lock) {
+                    if (_working) {
+                        source.Cancel();
+                        return;
                     }
                 }
-            );
+
+                Flush(source.Token);
+            });
         }
 
-        public void Flush() {
-            try {
-                List<NurseryInformationStruct> infoList = new();
-                Fetch(infoList);
-                if (infoList.Count > 0) _nurseryView.UpdateProcessInformation(infoList);
-            } catch (Exception e) {
-                Dogger.Error(e.ToString());
+        private async void Flush(CancellationToken token) {
+            lock (_lock) {
+                _working = true;
             }
-        }
+            bool goon = false;
 
-        private void Fetch(List<NurseryInformationStruct> list) {
-            if (list.Count > 0) {
-                list.Clear();
+            do {
+                try {
+                    IEnumerable<KeyValuePair<int, NurseryItem>> linq = _nurseryView.NurseryProcesses
+                        .Where(item => item.Value.IsRunning)
+                        .Select(item => item);
+
+                    Dictionary<int, ProcessStatistic> alivePs = linq.ToDictionary(
+                        item => item.Key,
+                        item => new ProcessStatistic(
+                            item.Key,
+                            item.Value.Ps.Id,
+                            item.Value.Ps.ProcessName,
+                            item.Value.CpuCounter.NextValue(),
+                            item.Value.MemCounter.NextValue()
+                        )
+                    );
+
+                    goon = alivePs.Count > 0;
+
+                    if (goon) {
+                        _nurseryView.UpdateProcessInformation(alivePs);
+                    }
+                } catch (Exception e) {
+                    Dogger.Error(e.ToString());
+                }
+
+                await Task.Delay(updateSpan, token);
+            } while (goon);
+
+            lock (_lock) {
+                _working = false;
             }
-
-            list.AddRange(_processManager.GetAliveProcesses().
-                                          Select(info => new NurseryInformationStruct {
-                                              Id = info.Pcs.Id,
-                                              ProcessName = info.Pcs.ProcessName,
-                                              CPU = info.CpuCounter.NextValue(),
-                                              Memory = (int)info.MemCounter.NextValue() >> 10,
-                                          }));
+            // clean the last one process info.
+            _nurseryView.UpdateProcessInformation(new Dictionary<int, ProcessStatistic>());
         }
     }
 

@@ -14,12 +14,18 @@ namespace FancyToys.Logging {
 
     public static class Dogger {
 
+        public static LogLevel LogLevel { get; set; }
+        public static StdType Stdlevel { get; set; }
+
+        // TODO 放到一个队列里
         private static readonly Queue<LogStruct> _logCache;
+        private static readonly Queue<StdStruct> _stdCache;
+
         private static readonly NLog.Logger NLogger;
-        public static LogLevel Level { private get; set; }
 
         static Dogger() {
             _logCache = new Queue<LogStruct>();
+            _stdCache = new Queue<StdStruct>();
             NLogger = LogManager.GetCurrentClassLogger();
         }
 
@@ -36,14 +42,43 @@ namespace FancyToys.Logging {
         public static void Fatal(string msg, int depth = 1) => Show(msg, LogLevel.Fatal, depth + 1);
 
         private static void Show(string s, LogLevel level, int depth) {
-            if (level <= Level) return;
+            if (level <= LogLevel) return;
 
-            LogStruct log = new() {
+            Dispatch(new LogStruct {
                 Level = level,
                 Source = $"[{CallerName(depth + 1)}]",
                 Content = s,
-            };
-            Dispatch(log);
+            });
+        }
+
+        public static void StdOutput(int pid, string msg) {
+            Dispatch(
+                new StdStruct {
+                    Level = StdType.Output,
+                    Sender = pid,
+                    Content = msg
+                }
+            );
+        }
+
+        public static void StdError(int pid, string msg) {
+            Dispatch(
+                new StdStruct {
+                    Level = StdType.Error,
+                    Sender = pid,
+                    Content = msg
+                }
+            );
+        }
+
+        public static void Flush() {
+            while (_logCache.Count > 0) {
+                Dispatch(_logCache.Dequeue());
+            }
+
+            while (_stdCache.Count > 0) {
+                Dispatch(_stdCache.Dequeue());
+            }
         }
 
         private static void Dispatch(LogStruct log) {
@@ -55,14 +90,16 @@ namespace FancyToys.Logging {
             }
         }
 
-        public static void Flush() {
-            while (_logCache.Count > 0) {
-                Dispatch(_logCache.Dequeue());
+        private static void Dispatch(StdStruct ss) {
+            if (ServerView.CurrentInstance != null) {
+                ServerView.CurrentInstance.PrintStd(ss);
+            } else {
+                _stdCache.Enqueue(ss);
             }
         }
 
         private static string CallerName(int depth) {
-            MethodBase method = new StackTrace().GetFrame(depth).GetMethod();
+            MethodBase method = new StackTrace().GetFrame(depth)?.GetMethod();
             return $"{method?.ReflectedType?.Name}.{method?.Name}";
         }
     }

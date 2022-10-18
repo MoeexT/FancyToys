@@ -1,20 +1,25 @@
 ﻿using System.ComponentModel;
 
+using NLog.LayoutRenderers;
+
 
 namespace FancyToys.Nursery {
 
-    internal class ProcessInformation: INotifyPropertyChanged {
+    public class ProcessStatistic: INotifyPropertyChanged {
 
-        private const double GB = 1 << 30;
+        private const float GB = 1 << 30;
 
         private string process;
         private int pid;
-        public double cpu;
-        public int memory;
+        public float cpu;
+        public float memory;
+        private readonly int _nurseryId;
+
+        public int GetNurseryId() => _nurseryId;
 
         public int PID {
             get => pid;
-            private set {
+            set {
                 pid = value;
                 RaisePropertyChanged(nameof(PID));
             }
@@ -22,7 +27,7 @@ namespace FancyToys.Nursery {
 
         public string Process {
             get => process;
-            private set {
+            set {
                 process = value;
                 RaisePropertyChanged(nameof(Process));
             }
@@ -30,32 +35,33 @@ namespace FancyToys.Nursery {
 
         public string CPU { get => $"{cpu:F}%"; }
 
-        public string Memory { get => memory < GB ? $"{memory:N0}KB" : $"{memory >> 10:N0}MB"; }
+        public string Memory { get => memory < GB ? $"{(int)memory >> 10:N0}KB" : $"{(int)memory >> 20:N0}MB"; }
 
-        public void SetCPU(double _cpu) {
+        public void SetCPU(float _cpu) {
             cpu = _cpu;
             RaisePropertyChanged(nameof(CPU));
         }
 
-        public void SetMemory(int mem) {
+        public void SetMemory(float mem) {
             memory = mem;
             RaisePropertyChanged(nameof(Memory));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ProcessInformation(NurseryInformationStruct nfs) {
-            pid = nfs.Id;
-            process = nfs.ProcessName;
-            cpu = nfs.CPU;
-            memory = nfs.Memory;
+        public ProcessStatistic(int nid, int psId, string psName, float cpu, float mem) {
+            _nurseryId = nid;
+            pid = psId;
+            process = psName;
+            this.cpu = cpu;
+            memory = mem;
         }
 
-        protected void RaisePropertyChanged(string name) {
+        private void RaisePropertyChanged(string name) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        public ProcessInformation() { }
+        public ProcessStatistic() { }
 
         public override string ToString() { return $"{{{Process}, {PID}, {CPU}, {Memory}}}"; }
     }
