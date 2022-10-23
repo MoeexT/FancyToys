@@ -10,6 +10,27 @@
     <UseWinUI>true</UseWinUI>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+    <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm64'">
+        <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    </PropertyGroup>-->
+  <ItemGroup>
+    <None Remove="Controls\ClipListItem.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2" />
@@ -21,6 +42,12 @@
     <PackageReference Include="PInvoke.User32" Version="0.7.124" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
     <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Controls\ClipListItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

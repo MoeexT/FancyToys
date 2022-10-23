@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 using NLog.LayoutRenderers;
 
@@ -21,7 +22,7 @@ namespace FancyToys.Nursery {
             get => pid;
             set {
                 pid = value;
-                RaisePropertyChanged(nameof(PID));
+                RaisePropertyChanged();
             }
         }
 
@@ -29,7 +30,7 @@ namespace FancyToys.Nursery {
             get => process;
             set {
                 process = value;
-                RaisePropertyChanged(nameof(Process));
+                RaisePropertyChanged();
             }
         }
 
@@ -39,12 +40,12 @@ namespace FancyToys.Nursery {
 
         public void SetCPU(float _cpu) {
             cpu = _cpu;
-            RaisePropertyChanged(nameof(CPU));
+            RaisePropertyChanged();
         }
 
         public void SetMemory(float mem) {
             memory = mem;
-            RaisePropertyChanged(nameof(Memory));
+            RaisePropertyChanged();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -57,7 +58,7 @@ namespace FancyToys.Nursery {
             memory = mem;
         }
 
-        private void RaisePropertyChanged(string name) {
+        private void RaisePropertyChanged([CallerMemberName]string name = "") {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 

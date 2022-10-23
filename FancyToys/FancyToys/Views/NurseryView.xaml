@@ -73,7 +73,8 @@
             </Grid>
 
             <Grid Grid.Row="1">
-                <ListView x:Name="ProcessSwitchList" Background="Transparent">
+                <ListView x:Name="ProcessSwitchList" Background="Transparent"
+                          Padding="0 0 10 0">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="Height" Value="32" />

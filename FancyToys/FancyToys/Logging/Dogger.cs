@@ -14,8 +14,8 @@ namespace FancyToys.Logging {
 
     public static class Dogger {
 
-        public static LogLevel LogLevel { get; set; }
-        public static StdType Stdlevel { get; set; }
+        public static LogLevel LogLevel { get; set; } = LogLevel.Trace;
+        public static StdType StdLevel { get; set; }
 
         // TODO 放到一个队列里
         private static readonly Queue<LogStruct> _logCache;
@@ -82,9 +82,9 @@ namespace FancyToys.Logging {
         }
 
         private static void Dispatch(LogStruct log) {
+            NLogger.Info(log.ToString());
             if (ServerView.CurrentInstance != null) {
                 ServerView.CurrentInstance.PrintLog(log);
-                NLogger.Info(log.ToString());
             } else {
                 _logCache.Enqueue(log);
             }

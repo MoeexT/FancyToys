@@ -5,10 +5,105 @@
     xmlns:local="using:FancyToys.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:FancyToys.Controls"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
+    <Page.Resources>
+    <!--     <DataTemplate x:Key="CommandBarFlyout" x:DataType="controls:ClipItem"> -->
+    <!--         <CommandBarFlyout> -->
+    <!--             <AppBarButton x:Name="PinBarButton" Click="PinButton_Click" Tag="{x:Bind Self}"> -->
+    <!--                 <AppBarButton.Icon> -->
+    <!--                     <FontIcon x:Name="PinButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE718;" /> -->
+    <!--                 </AppBarButton.Icon> -->
+    <!--             </AppBarButton> -->
+    <!--             <AppBarButton x:Name="CopyBarButton" Click="CopyButton_Click" Tag="{x:Bind Self}"> -->
+    <!--                 <AppBarButton.Icon> -->
+    <!--                     <FontIcon x:Name="CopyButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE8C8;" /> -->
+    <!--                 </AppBarButton.Icon> -->
+    <!--             </AppBarButton> -->
+    <!--             <AppBarButton x:Name="DeleteBarButton" Click="DeleteButton_Click" Tag="{x:Bind Self}"> -->
+    <!--                 <AppBarButton.Icon> -->
+    <!--                     <FontIcon x:Name="DeleteButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE74D;" /> -->
+    <!--                 </AppBarButton.Icon> -->
+    <!--             </AppBarButton> -->
+    <!--         </CommandBarFlyout> -->
+    <!--     </DataTemplate> -->
+    <!-- -->
+    <!-- -->
+    <!--     <DataTemplate x:Key="ListViewItemTemplate" x:DataType="controls:ClipItem"> -->
+    <!--         <Grid> -->
+    <!--             <Grid.ColumnDefinitions> -->
+    <!--                 <ColumnDefinition Width="*" /> -->
+    <!--                 <ColumnDefinition Width="30" /> -->
+    <!--             </Grid.ColumnDefinitions> -->
+    <!--             <Grid Grid.Column="0" x:Name="Grid0" Background="Aqua"> -->
+    <!--                 <Image x:Name="ClipImage" -->
+    <!--                        Source="{x:Bind ImageSource}" -->
+    <!--                        Visibility="{x:Bind ShowImage}" -->
+    <!--                        HorizontalAlignment="Left" /> -->
+    <!--                 <TextBlock x:Name="ClipText" -->
+    <!--                            MaxLines="3" -->
+    <!--                            TextWrapping="Wrap" -->
+    <!--                            Text="{x:Bind TextSource}" -->
+    <!--                            TextTrimming="CharacterEllipsis" -->
+    <!--                            Visibility="{x:Bind ShowText}" -->
+    <!--                            HorizontalAlignment="Left" /> -->
+    <!--                 <HyperlinkButton x:Name="ClipLink" -->
+    <!--                                  Visibility="{x:Bind ShowUri}" -->
+    <!--                                  Content="{x:Bind TextSource}" -->
+    <!--                                  NavigateUri="{x:Bind UriSource}" /> -->
+    <!--             </Grid> -->
+    <!--             <StackPanel Grid.Column="1"></StackPanel> -->
+    <!--         </Grid> -->
+    <!--     </DataTemplate> -->
+    </Page.Resources>
+
     <Grid>
-        <TextBlock Text="Teleport" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="330"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="125" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0">
+                <TextBlock x:Name="ClipTitle" Text="ClipText" TextWrapping="Wrap" />
+                <Button Content="Clear" Click="ClearButton_OnClick"></Button>
+                <ToggleButton Content="Underline" Click="UnderLineButton_OnClick"></ToggleButton>
+                <ToggleSwitch x:Name="ListenSwitch" Toggled="ListenSwitch_OnToggled"></ToggleSwitch>
+            </StackPanel>
+
+            <ListView Padding="2"
+                Grid.Row="1"
+                      x:Name="ClipListView"
+                      CanDragItems="True"
+                      SelectionMode="Extended"
+                      ItemsSource="{x:Bind ClipList, Mode=TwoWay}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <!-- <Setter Property="Height" Value="80" /> -->
+                        <Setter Property="Margin" Value="0,0,12,0" />
+                        <Setter Property="Padding" Value="4,-7,5,3" />
+                        <Setter Property="Background" Value="#343434" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="VerticalAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition />
+                    </TransitionCollection>
+                </ListView.ItemContainerTransitions>
+
+            </ListView>
+        </Grid>
+        <Grid Grid.Column="1"></Grid>
+
+
     </Grid>
 </Page>

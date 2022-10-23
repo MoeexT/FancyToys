@@ -6,86 +6,101 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:converters="using:AppUIBasics.Common"
+    xmlns:controls="using:FancyToys.Controls"
     x:Name="MainNoodle"
     mc:Ignorable="d">
 
     <Grid
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        
+
         <Grid.Resources>
             <CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>
             <Thickness x:Key="NavigationViewHeaderMargin">0</Thickness>
             <Thickness x:Key="NavigationViewContentPresenterMargin">0</Thickness>
-        </Grid.Resources> 
-        
+            <controls:MenuItemTemplateSelector x:Key="selector">
+                <controls:MenuItemTemplateSelector.ItemTemplate>
+                    <DataTemplate x:DataType="controls:Category">
+                        <NavigationViewItem Content="{x:Bind Content}" ToolTipService.ToolTip="{x:Bind Tooltip}">
+                            <NavigationViewItem.Icon>
+                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="{x:Bind Glyph}" Foreground="{x:Bind Foreground}" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </DataTemplate>
+                </controls:MenuItemTemplateSelector.ItemTemplate>
+            </controls:MenuItemTemplateSelector>
+        </Grid.Resources>
+
+        <!--
+            tip
+            SelectionFollowsFocus="Enabled" will navigate to first page when click blank area. 
+
+         -->
         <muxc:NavigationView x:Name="NavView"
                              Height="Auto"
                              Width="Auto"
-                             PaneTitle="FancyToys"
-                             PaneDisplayMode="Left"
-                             ExpandedModeThresholdWidth="150"
-                             IsTitleBarAutoPaddingEnabled="False"
-                             IsPaneOpen="True"
-                             IsBackButtonVisible="Collapsed"
-                             IsPaneToggleButtonVisible="True"
-                             OpenPaneLength="160"
-                             SelectionFollowsFocus="Enabled"
-                             IsSettingsVisible="True"
-                             FontFamily="Microsoft YaHei UI Light"
                              FontSize="12"
                              FontStyle="Normal"
                              FontWeight="Normal"
+                             PaneTitle="FancyToys"
+                             PaneDisplayMode="Left"
+                             IsPaneOpen="True"
+                             OpenPaneLength="160"
+                             IsSettingsVisible="True"
+                             ExpandedModeThresholdWidth="150"
+                             IsTitleBarAutoPaddingEnabled="False"
+                             IsBackButtonVisible="Collapsed"
+                             IsPaneToggleButtonVisible="True"
+                             FontFamily="Microsoft YaHei UI Light"
                              SelectionChanged="NavViewSelectionChanged"
-        >
+                             MenuItemsSource="{x:Bind Categories, Mode=OneWay}"
+                             MenuItemTemplateSelector="{StaticResource selector}">
             <!--
                 ItemInvoked="NavView_ItemInvoked"
                 Loaded="NavView_Loaded"
                 GettingFocus="NavView_GettingFocus"
             -->
-            <muxc:NavigationView.MenuItems>
-                <muxc:NavigationViewItem x:Name="Nursery"
-                                    Tag="Nursery"
-                                    Content="Nursery"
-                                    ToolTipService.ToolTip="Process manager"
-                                    FontFamily="Microsoft YaHei UI Light">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE95E;" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
+            <!-- <muxc:NavigationView.MenuItems> -->
+            <!--     <muxc:NavigationViewItem x:Name="Nursery" -->
+            <!--                         Tag="Nursery" -->
+            <!--                         Content="Nursery" -->
+            <!--                         ToolTipService.ToolTip="Process manager" -->
+            <!--                         FontFamily="Microsoft YaHei UI Light"> -->
+            <!--         <muxc:NavigationViewItem.Icon> -->
+            <!--             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE95E;" /> -->
+            <!--         </muxc:NavigationViewItem.Icon> -->
+            <!--     </muxc:NavigationViewItem> -->
+            <!-- -->
+            <!--     <muxc:NavigationViewItem x:Name="Teleport" -->
+            <!--                         Tag="Teleport" -->
+            <!--                         Content="Teleport" -->
+            <!--                         ToolTipService.ToolTip="Share file easily" -->
+            <!--                         FontFamily="Microsoft YaHei UI Light"> -->
+            <!--         <muxc:NavigationViewItem.Icon> -->
+            <!--             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE95A;" Foreground="#007bfe" /> -->
+            <!--         </muxc:NavigationViewItem.Icon> -->
+            <!--     </muxc:NavigationViewItem> -->
+            <!-- -->
+            <!--     <muxc:NavigationViewItem x:Name="FancyServer" -->
+            <!--                         Tag="FancyServer" -->
+            <!--                         Content="FancyServer" -->
+            <!--                         ToolTipService.ToolTip="Monitor the server" -->
+            <!--                         FontFamily="Microsoft YaHei UI Light"> -->
+            <!--         <muxc:NavigationViewItem.Icon> -->
+            <!--             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEA92;" Foreground="Red" /> -->
+            <!--         </muxc:NavigationViewItem.Icon> -->
+            <!--     </muxc:NavigationViewItem> -->
+            <!-- </muxc:NavigationView.MenuItems> -->
 
-                <muxc:NavigationViewItem x:Name="Teleport"
-                                    Tag="Teleport"
-                                    Content="Teleport"
-                                    ToolTipService.ToolTip="Share file easily"
-                                    FontFamily="Microsoft YaHei UI Light">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE95A;" Foreground="#007bfe" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-
-                <muxc:NavigationViewItem x:Name="FancyServer"
-                                    Tag="FancyServer"
-                                    Content="FancyServer"
-                                    ToolTipService.ToolTip="Monitor the server"
-                                    FontFamily="Microsoft YaHei UI Light">
-                    <muxc:NavigationViewItem.Icon>
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEA92;" Foreground="Red" />
-                    </muxc:NavigationViewItem.Icon>
-                </muxc:NavigationViewItem>
-            </muxc:NavigationView.MenuItems>
-
-
-            <Frame x:Name="ContentFrame"
-                   AllowDrop="True">
-
+            <Frame x:Name="ContentFrame" Margin="0" AllowDrop="True">
                 <!--Navigated="OnNavigated"-->
-
                 <Frame.ContentTransitions>
                     <TransitionCollection>
                         <NavigationThemeTransition />
                     </TransitionCollection>
                 </Frame.ContentTransitions>
             </Frame>
+
         </muxc:NavigationView>
     </Grid>
 </Window>
