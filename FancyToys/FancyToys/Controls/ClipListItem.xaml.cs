@@ -44,10 +44,37 @@ namespace FancyToys.Controls {
         private string _clipText;
         private RandomAccessStreamReference _clipImageStream;
         private IReadOnlyList<IStorageItem> _clipStorageItems;
-        
+
+        private ClipType _contentType;
         private TextBlock _textBlock { get; set; }
 
-        public ClipType ContentType { get; private set; }
+        public ClipType ContentType {
+            get => _contentType;
+            private set {
+                switch (value) {
+                    case ClipType.Image:
+                        ClipTypeIcon.Glyph = "\uEB9F";
+                        ToolTipService.SetToolTip(ClipTypeIcon, "Image");
+                        break;
+                    case ClipType.File:
+                        ClipTypeIcon.Glyph = "\uEC50"; // E8A5
+                        ToolTipService.SetToolTip(ClipTypeIcon, "File");
+                        break;
+                    case ClipType.Uri:
+                        ClipTypeIcon.Glyph = "\uF6FA"; // E774
+                        ToolTipService.SetToolTip(ClipTypeIcon, "Uri");
+                        break;
+                    case ClipType.Text:
+                        default:
+                        ClipTypeIcon.Glyph = null;
+                        ToolTipService.SetToolTip(ClipTypeIcon, null);
+                        // ClipTypeIcon.Glyph = "\uE8A4";
+                        // ToolTipService.SetToolTip(ClipTypeIcon, "Text");
+                        break;
+                }
+                _contentType = value;
+            }
+        }
 
         public TextDecorations TextDecoration {
             get => _textBlock?.TextDecorations ?? TextDecorations.None;
@@ -87,18 +114,17 @@ namespace FancyToys.Controls {
             // Not support yet: rtf, html,
 
             if (package.Contains("FileDrop")) {
-                ContentType = ClipType.File;
-                _clipStorageItems = await package.GetStorageItemsAsync();
                 StackPanel panel = new();
+                _clipStorageItems = await package.GetStorageItemsAsync();
 
                 for (int i = 0; i < _clipStorageItems.Count; i++) {
                     IStorageItem storageItem = _clipStorageItems[i];
                     panel.Children.Add(ClassifyText(storageItem.Path, i + 1));
                     Debug.WriteLine($"{storageItem.Path}, {storageItem.Name}, {storageItem.DateCreated}");
                 }
+                ContentType = ClipType.File;
                 ClipJar.Children.Insert(0, panel);
             } else if (package.Contains(StandardDataFormats.Bitmap)) {
-                ContentType = ClipType.Image;
                 ClipJar.Children.Insert(0, await SetImageStream(await package.GetBitmapAsync()));
             } else {
                 ClipJar.Children.Insert(0, ClassifyText(await package.GetTextAsync()));
@@ -113,19 +139,16 @@ namespace FancyToys.Controls {
 
             // not a uri, set text to ClipItem
             if (!validUri) {
-                ContentType = ClipType.Text;
-                _clipText = path;
                 return CreateTextBlock(path);
             }
 
-            ContentType = ClipType.Uri;
-            _clipUri = uri;
             string scheme = uri.Scheme;
 
             if (scheme.Equals(Uri.UriSchemeFile)) {
                 // file, open with explorer
                 Debug.WriteLine($"是文件！！！{path}");
                 Dogger.Debug($"是文件！！！{path}");
+
                 return CreateHyperlink(path, null, (s, _) => {
                     if (s is not HyperlinkButton) {
                         return;
@@ -147,6 +170,7 @@ namespace FancyToys.Controls {
                 // internet url, open with browser
                 return CreateHyperlink(path, uri, null);
             }
+
             if (scheme.Equals(Uri.UriSchemeMailto)) { //  || isEmailAddress
                 // email, open with `Email`
                 return CreateHyperlink(path, null, (s, _) => {
@@ -162,10 +186,12 @@ namespace FancyToys.Controls {
             }
 
             // unknown uri
+            Dogger.Warn($"unknown uri{path}");
             return CreateTextBlock(path);
         }
 
         private async Task<Image> SetImageStream(RandomAccessStreamReference streamReference) {
+            ContentType = ClipType.Image;
             _clipImageStream = streamReference;
             using IRandomAccessStreamWithContentType stream = await streamReference.OpenReadAsync();
             BitmapImage bi = new();
@@ -181,7 +207,9 @@ namespace FancyToys.Controls {
         }
 
         private TextBlock CreateTextBlock(string path) {
-            return _textBlock = new TextBlock {
+            _clipText = path;
+            ContentType = ClipType.Text;
+            _textBlock = new TextBlock {
                 Text = path,
                 MaxLines = 3,
                 // Height = 70,
@@ -192,9 +220,20 @@ namespace FancyToys.Controls {
                 VerticalAlignment = VerticalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
             };
+
+            _textBlock.PointerEntered += (o, s) => {
+                _textBlock.TextDecorations = TextDecorations.Underline;
+            };
+
+            _textBlock.PointerExited += (o, s) => {
+                TextDecoration = TextDecorations.None;
+            };
+            return _textBlock;
         }
 
-        private static HyperlinkButton CreateHyperlink(string path, Uri uri, RoutedEventHandler handler, bool odd = true) {
+        private HyperlinkButton CreateHyperlink(string path, Uri uri, RoutedEventHandler handler, bool odd = true) {
+            ContentType = ClipType.Uri;
+            _clipUri = uri;
             HyperlinkButton btn = new() {
                 Content = path,
                 Height = 30,

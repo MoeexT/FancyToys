@@ -38,6 +38,12 @@ namespace FancyToys.Views {
         public bool AllowSimilarWithFormer { get; set; } = true;
 
         public TeleportView() {
+            /*
+             * icon:
+             * Radar, used for unconnected situation
+             * wifi,
+             * 
+             */
             InitializeComponent();
 
             ClipList = new ObservableCollection<ClipListItem>();
