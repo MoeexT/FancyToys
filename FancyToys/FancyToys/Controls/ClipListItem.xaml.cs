@@ -54,20 +54,21 @@ namespace FancyToys.Controls {
                 switch (value) {
                     case ClipType.Image:
                         ClipTypeIcon.Glyph = "\uEB9F";
-                        ToolTipService.SetToolTip(ClipTypeIcon, "Image");
+                        // ToolTipService.SetToolTip(ClipTypeIcon, "Image");
                         break;
                     case ClipType.File:
                         ClipTypeIcon.Glyph = "\uEC50"; // E8A5
-                        ToolTipService.SetToolTip(ClipTypeIcon, "File");
+                        // ToolTipService.SetToolTip(ClipTypeIcon, "File");
                         break;
                     case ClipType.Uri:
-                        ClipTypeIcon.Glyph = "\uF6FA"; // E774
-                        ToolTipService.SetToolTip(ClipTypeIcon, "Uri");
+                        bool isMail = _clipUri.Scheme.Equals(Uri.UriSchemeMailto);
+                        ClipTypeIcon.Glyph = isMail ? "\uE715" : "\uF6FA"; // E774
+                        // ToolTipService.SetToolTip(ClipTypeIcon, isMail ? "Email" : "Uri");
                         break;
                     case ClipType.Text:
-                        default:
+                    default:
                         ClipTypeIcon.Glyph = null;
-                        ToolTipService.SetToolTip(ClipTypeIcon, null);
+                        // ToolTipService.SetToolTip(ClipTypeIcon, null);
                         // ClipTypeIcon.Glyph = "\uE8A4";
                         // ToolTipService.SetToolTip(ClipTypeIcon, "Text");
                         break;
@@ -113,14 +114,29 @@ namespace FancyToys.Controls {
             Debug.WriteLine(string.Join(", ", package.AvailableFormats));
             // Not support yet: rtf, html,
 
-            if (package.Contains("FileDrop")) {
+            if (package.Contains("FileDrop") || (
+                package.Contains("Shell IDList Array") &&
+                package.Contains("Preferred DropEffect"))) {
+                /* 
+                 * Shell IDList Array,
+                 * DataObjectAttributes,
+                 * DataObjectAttributesRequiringElevation,
+                 * Shell Object Offsets,
+                 * Preferred DropEffect,
+                 * AsyncFlag,
+                 * FileDrop,
+                 * FileName,
+                 * FileContents,
+                 * FileNameW,
+                 * FileGroupDescriptorW
+                 */
+
                 StackPanel panel = new();
                 _clipStorageItems = await package.GetStorageItemsAsync();
 
                 for (int i = 0; i < _clipStorageItems.Count; i++) {
                     IStorageItem storageItem = _clipStorageItems[i];
                     panel.Children.Add(ClassifyText(storageItem.Path, i + 1));
-                    Debug.WriteLine($"{storageItem.Path}, {storageItem.Name}, {storageItem.DateCreated}");
                 }
                 ContentType = ClipType.File;
                 ClipJar.Children.Insert(0, panel);
@@ -135,21 +151,25 @@ namespace FancyToys.Controls {
             if (path is null) {
                 return null;
             }
+            _clipText = path;
             bool validUri = Uri.TryCreate(path, UriKind.Absolute, out Uri uri);
 
             // not a uri, set text to ClipItem
             if (!validUri) {
+                Dogger.Debug($"invalid uri{path}");
                 return CreateTextBlock(path);
             }
 
             string scheme = uri.Scheme;
 
             if (scheme.Equals(Uri.UriSchemeFile)) {
-                // file, open with explorer
-                Debug.WriteLine($"是文件！！！{path}");
-                Dogger.Debug($"是文件！！！{path}");
+                Dogger.Debug($"文件！{path}");
 
-                return CreateHyperlink(path, null, (s, _) => {
+                if (!File.Exists(path) && !Directory.Exists(path)) {
+                    return CreateTextBlock(path);
+                }
+
+                return CreateHyperlink(ClipType.File, uri, (s, _) => {
                     if (s is not HyperlinkButton) {
                         return;
                     }
@@ -168,31 +188,34 @@ namespace FancyToys.Controls {
             if (scheme.Equals(Uri.UriSchemeFtp) || scheme.Equals(Uri.UriSchemeHttp) ||
                 scheme.Equals(Uri.UriSchemeHttps)) {
                 // internet url, open with browser
-                return CreateHyperlink(path, uri, null);
+                Dogger.Debug($"web link{path}");
+                return CreateHyperlink(ClipType.Uri, uri, null);
             }
 
             if (scheme.Equals(Uri.UriSchemeMailto)) { //  || isEmailAddress
                 // email, open with `Email`
-                return CreateHyperlink(path, null, (s, _) => {
+                Dogger.Debug($"email uri{path}, {uri.AbsolutePath}, {uri.AbsoluteUri}");
+
+                return CreateHyperlink(ClipType.Uri, uri, (s, _) => {
                     if (s is not HyperlinkButton) {
                         return;
                     }
 
-                    // https://github.com/dotnet/runtime/issues/30303#issuecomment-513210581
+                    // https://github.com/dotnet/runtime/issues/30303#issuecomment-513210581 
                     Process.Start(new ProcessStartInfo(path) {
                         UseShellExecute = true
                     });
                 });
             }
 
-            // unknown uri
+            // unknown uri, set default text
             Dogger.Warn($"unknown uri{path}");
             return CreateTextBlock(path);
         }
 
         private async Task<Image> SetImageStream(RandomAccessStreamReference streamReference) {
-            ContentType = ClipType.Image;
             _clipImageStream = streamReference;
+            ContentType = ClipType.Image;
             using IRandomAccessStreamWithContentType stream = await streamReference.OpenReadAsync();
             BitmapImage bi = new();
             bi.SetSource(stream);
@@ -209,12 +232,11 @@ namespace FancyToys.Controls {
         private TextBlock CreateTextBlock(string path) {
             _clipText = path;
             ContentType = ClipType.Text;
+
             _textBlock = new TextBlock {
                 Text = path,
                 MaxLines = 3,
-                // Height = 70,
                 Width = 300,
-                // TextDecorations = TextDecorations.Underline,
                 TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -231,24 +253,24 @@ namespace FancyToys.Controls {
             return _textBlock;
         }
 
-        private HyperlinkButton CreateHyperlink(string path, Uri uri, RoutedEventHandler handler, bool odd = true) {
-            ContentType = ClipType.Uri;
+        private HyperlinkButton CreateHyperlink(ClipType type, Uri uri, RoutedEventHandler handler, bool odd = true) {
             _clipUri = uri;
-            HyperlinkButton btn = new() {
-                Content = path,
-                Height = 30,
-                FontStyle = FontStyle.Italic,
-                BorderThickness = odd ? new Thickness(1) : new Thickness(1, 0, 1, 0),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(0xff, 0x3c, 0x3c, 0x3c)),
-                CornerRadius = new CornerRadius(0),
-                Padding = new Thickness(0, -1, 0, -1),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            ToolTipService.SetToolTip(btn, path);
+            ContentType = type;
 
-            if (uri is not null) {
-                btn.NavigateUri = uri;
-            }
+            HyperlinkButton btn = new() {
+                Height = 30,
+                Width = 300,
+                NavigateUri = uri,
+                Content = uri.AbsoluteUri,
+                FontStyle = FontStyle.Italic,
+                CornerRadius = new CornerRadius(0),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(0, -1, 0, -1),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(0xff, 0x3c, 0x3c, 0x3c)),
+                BorderThickness = odd ? new Thickness(1) : new Thickness(1, 0, 1, 0),
+            };
+            ToolTipService.SetToolTip(btn, uri.AbsoluteUri);
 
             if (handler is not null) {
                 btn.Click += handler;
@@ -261,19 +283,21 @@ namespace FancyToys.Controls {
             Pinned = !Pinned;
         }
 
-        private void CopyButton_Click(object sender, RoutedEventArgs e) {
+        private async void CopyButton_Click(object sender, RoutedEventArgs e) {
             DataPackage package = new();
 
             switch (ContentType) {
                 case ClipType.File:
+                    foreach (IStorageItem item in _clipStorageItems) {
+                        Dogger.Debug(Path.Join(item.Path, item.Name));
+                    }
                     package.SetStorageItems(_clipStorageItems);
+                    package.RequestedOperation = DataPackageOperation.Copy;
                     break;
                 case ClipType.Image:
                     package.SetBitmap(_clipImageStream);
                     break;
                 case ClipType.Uri:
-                    package.SetUri(_clipUri);
-                    break;
                 case ClipType.Text:
                 default:
                     package.SetText(_clipText);

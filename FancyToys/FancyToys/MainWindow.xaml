@@ -92,14 +92,24 @@
             <!--     </muxc:NavigationViewItem> -->
             <!-- </muxc:NavigationView.MenuItems> -->
 
-            <Frame x:Name="ContentFrame" Margin="0" AllowDrop="True">
-                <!--Navigated="OnNavigated"-->
-                <Frame.ContentTransitions>
-                    <TransitionCollection>
-                        <NavigationThemeTransition />
-                    </TransitionCollection>
-                </Frame.ContentTransitions>
-            </Frame>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" x:Name="AppTitleBar" VerticalAlignment="Top">
+                    <TextBlock x:Name="AppTitle" VerticalAlignment="Top" Height="24" Margin="0,8,0,0" />
+                </Border>
+                <Frame Grid.Row="1" x:Name="ContentFrame" Margin="5 0 0 0" AllowDrop="True">
+                    <!--Navigated="OnNavigated"-->
+                    <Frame.ContentTransitions>
+                        <TransitionCollection>
+                            <NavigationThemeTransition />
+                        </TransitionCollection>
+                    </Frame.ContentTransitions>
+                </Frame>
+            </Grid>
+
 
         </muxc:NavigationView>
     </Grid>

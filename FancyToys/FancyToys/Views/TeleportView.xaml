@@ -38,8 +38,8 @@
                     <Style TargetType="ListViewItem">
                         <!-- <Setter Property="Height" Value="80" /> -->
                         <Setter Property="Margin" Value="0,0,12,0" />
-                        <Setter Property="Padding" Value="4,-7,5,3" />
-                        <Setter Property="Background" Value="#343434" />
+                        <Setter Property="Padding" Value="0,-7,5,3" />
+                        <!-- <Setter Property="Background" Value="#343434" /> -->
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
                         <Setter Property="VerticalAlignment" Value="Stretch" />
                     </Style>
