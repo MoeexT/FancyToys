@@ -12,7 +12,7 @@
     mc:Ignorable="d">
 
     <Grid
-        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        Background="{ThemeResource BackgroundAcrylicBrush}">
 
         <Grid.Resources>
             <CornerRadius x:Key="NavigationViewContentGridCornerRadius">0</CornerRadius>

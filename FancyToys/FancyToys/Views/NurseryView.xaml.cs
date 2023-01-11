@@ -15,6 +15,8 @@ using CommunityToolkit.WinUI.UI.Controls;
 
 using FancyToys.Logging;
 using FancyToys.Nursery;
+using WinRT.Interop;
+using System.Diagnostics;
 
 
 
@@ -71,11 +73,14 @@ namespace FancyToys.Views {
         }
 
         private async void AddFileFlyoutItemClick(object sender, RoutedEventArgs e) {
+            var hwnd = WindowNative.GetWindowHandle(MainWindow.CurrentWindow);
             FileOpenPicker picker = new() {
                 ViewMode = PickerViewMode.Thumbnail,
                 SuggestedStartLocation = PickerLocationId.HomeGroup
             };
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
             picker.FileTypeFilter.Add(".exe");
+            //((IInitializeWithWindow)(object)picker).Initialize(Process.GetCurrentProcess().MainWindowHandle);
             StorageFile file = await picker.PickSingleFileAsync();
 
             // TODO: 可能选择多个文件
@@ -119,7 +124,10 @@ namespace FancyToys.Views {
             int pid = (int)ai.Tag;
             NurseryItem ni = NurseryProcesses[pid];
             
-            InputDialog inputDialog = new("Nursery", "输入参数", ni.Ps.StartInfo.Arguments);
+            InputDialog inputDialog = new("Nursery", "输入参数", ni.Ps.StartInfo.Arguments) {
+                XamlRoot = this.XamlRoot,
+            };
+            // Value does not fall within the expected range
             await inputDialog.ShowAsync();
 
             if (inputDialog.isSaved) {

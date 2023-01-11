@@ -7,8 +7,27 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:cwuc="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:media="using:Microsoft.UI.Xaml.Media"
     NavigationCacheMode="Required"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <media:AcrylicBrush x:Key="CustomAcrylicInAppBrush" TintOpacity="0.8" TintColor="Black" FallbackColor="Green"/>
+                    <media:AcrylicBrush x:Key="CustomAcrylicInAppLuminosity" TintOpacity="0.8" TintColor="SkyBlue" FallbackColor="SkyBlue"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <DataTemplate x:Key="ColorTemplate" x:DataType="SolidColorBrush">
+                <StackPanel Orientation="Horizontal" AutomationProperties.Name="{x:Bind Color}">
+                    <Rectangle Height="20" Width="20" Fill="{x:Bind}"/>
+                    <TextBlock Text="{x:Bind Color}" Margin="4,0,0,0"/>
+                </StackPanel>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Page.Resources>
 
     <Grid>
         <Grid.BackgroundTransition>
@@ -112,10 +131,11 @@
                     StrokeThickness="3"
                     RadiusX="5"
                     RadiusY="5"
+                    Fill="{ThemeResource CustomAcrylicInAppBrush}"
                     Canvas.ZIndex="1">
-                    <Rectangle.Fill>
+                    <!--<Rectangle.Fill>
                         <SolidColorBrush Color="#FF7C7C7C" Opacity="0.2" />
-                    </Rectangle.Fill>
+                    </Rectangle.Fill>-->
                 </Rectangle>
 
                 <TextBlock

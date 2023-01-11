@@ -35,6 +35,14 @@ namespace FancyToys.Controls {
             Uri = 3,
         }
 
+        private struct ClipStruct {
+            public byte[] offsets;
+            public ClipType type;
+            public string uri;
+            public DateTime createTime;
+            public byte[] content;
+        }
+
         public delegate void OnDeleteButtonClicked(ClipListItem item);
         public event OnDeleteButtonClicked OnDelete;
 
