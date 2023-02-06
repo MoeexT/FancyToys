@@ -95,10 +95,4 @@
     <ItemGroup>
       <Folder Include="Tasks\" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Page Update="Views\VolumeView.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </Page>
-    </ItemGroup>
 </Project>

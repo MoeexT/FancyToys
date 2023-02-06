@@ -1,13 +1,17 @@
-﻿using Microsoft.UI;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+using Windows.Storage;
+
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
-using System;
-using System.Collections.Generic;
-
-using Windows.Storage;
+using AudioSwitcher.AudioApi.CoreAudio;
 
 using FancyToys.Logging;
 
@@ -49,10 +53,14 @@ namespace FancyToys.Views {
                 });
             }
             InitializeDefaultSettings();
+
+            // run background tasks;
+            CheckSystemVolume();
         }
 
         private void InitializeDefaultSettings() {
             LogLevel = LogLevel.Trace;
+
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
                     DarkThemeButton.IsChecked = true;
@@ -60,6 +68,7 @@ namespace FancyToys.Views {
                 case ElementTheme.Light:
                     LightThemeButton.IsChecked = true;
                     break;
+                case ElementTheme.Default:
                 default:
                     SystemThemeButton.IsChecked = true;
                     break;
@@ -128,6 +137,32 @@ namespace FancyToys.Views {
                 MonitorFontColor = new SolidColorBrush(Colors.White);
                 opacityPreview.Tag = "White";
             }
+        }
+
+        private void LockIcon_Click(object sender, RoutedEventArgs e) {
+            if (sender is not ToggleButton) {
+                return;
+            }
+            SystemVolumeLocked = !SystemVolumeLocked;
+        }
+
+        private void CheckSystemVolume() {
+            CoreAudioDevice defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+
+            Task.Run(async () => {
+                Dogger.Debug($"system volume: {defaultPlaybackDevice.Volume}");
+
+                while (true) {
+                    double curVol = defaultPlaybackDevice.Volume;
+
+                    if (SystemVolumeLocked && curVol > SystemVolumeMax) {
+                        defaultPlaybackDevice.Volume = SystemVolumeMax;
+                        Dogger.Info($"Reset volume from {curVol} to {SystemVolumeMax}");
+                    }
+
+                    await Task.Delay(3000);
+                }
+            });
         }
     }
 

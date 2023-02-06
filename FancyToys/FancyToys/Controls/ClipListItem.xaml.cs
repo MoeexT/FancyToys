@@ -164,7 +164,7 @@ namespace FancyToys.Controls {
 
             // not a uri, set text to ClipItem
             if (!validUri) {
-                Dogger.Debug($"invalid uri{path}");
+                //Dogger.Debug($"invalid uri{path}");
                 return CreateTextBlock(path);
             }
 

@@ -62,13 +62,6 @@ namespace FancyToys {
                     Tooltip = "Debugging",
                     Foreground = new SolidColorBrush(Colors.Red),
                 },
-                new Category(){
-                    Content = "VolumeLock",
-                    Name = "VolumeView",
-                    Glyph = "\uE994",
-                    Tooltip = "Set maxmium volumn",
-                    Foreground= new SolidColorBrush(Colors.Orchid),
-                },
             };
             this.InitializeComponent();
             NavView.SelectedItem = Categories.First();

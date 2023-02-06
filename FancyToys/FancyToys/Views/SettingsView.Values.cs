@@ -57,6 +57,26 @@ namespace FancyToys.Views {
             }
         }
 
+        public double SystemVolumeMax {
+            get => (double)(LocalSettings.Values[nameof(SystemVolumeMax)] ?? 20.0);
+            set {
+                Dogger.Info($"Set SystemMaxVolume: {value}");
+                LocalSettings.Values[nameof(SystemVolumeMax)] = value;
+                OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeMax));
+            }
+        }
+
+        public bool SystemVolumeLocked {
+            get => (bool)(LocalSettings.Values[nameof(SystemVolumeLocked)] ?? true);
+            set {
+                // TODO fixme: these vars' value don't follow SystemVolumeLockButton's check state 
+                SystemVolumeLockButton.Content = value ? "\xE72E" : "\xE785";
+                VolumeSlider.IsEnabled = !value;
+                LocalSettings.Values[nameof(SystemVolumeLocked)] = value;
+                OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeLocked));
+            }
+        }
+
     }
 
 }
