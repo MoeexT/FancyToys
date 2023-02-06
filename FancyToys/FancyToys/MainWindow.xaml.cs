@@ -53,7 +53,7 @@ namespace FancyToys {
                     Name = "NurseryView",
                     Glyph = "\uE9F5",
                     Tooltip = "Process Manager",
-                    Foreground = new SolidColorBrush(),
+                    Foreground = new SolidColorBrush(Colors.Aqua),
                 },
                 new Category() {
                     Content = "Server",
@@ -61,6 +61,13 @@ namespace FancyToys {
                     Glyph = "\uEA92",
                     Tooltip = "Debugging",
                     Foreground = new SolidColorBrush(Colors.Red),
+                },
+                new Category(){
+                    Content = "VolumeLock",
+                    Name = "VolumeView",
+                    Glyph = "\uE994",
+                    Tooltip = "Set maxmium volumn",
+                    Foreground= new SolidColorBrush(Colors.Orchid),
                 },
             };
             this.InitializeComponent();
