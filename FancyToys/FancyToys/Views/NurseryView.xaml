@@ -15,7 +15,7 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Default">
-                    <media:AcrylicBrush x:Key="CustomAcrylicInAppBrush" TintOpacity="0.8" TintColor="Black" FallbackColor="Green"/>
+                    <media:AcrylicBrush x:Key="CustomAcrylicInAppBrush" TintOpacity="0.5" TintColor="Black" FallbackColor="Green"/>
                     <media:AcrylicBrush x:Key="CustomAcrylicInAppLuminosity" TintOpacity="0.8" TintColor="SkyBlue" FallbackColor="SkyBlue"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
@@ -132,7 +132,7 @@
                     RadiusX="5"
                     RadiusY="5"
                     Fill="{ThemeResource CustomAcrylicInAppBrush}"
-                    Canvas.ZIndex="1">
+                    Canvas.ZIndex="-1">
                     <!--<Rectangle.Fill>
                         <SolidColorBrush Color="#FF7C7C7C" Opacity="0.2" />
                     </Rectangle.Fill>-->
@@ -143,7 +143,7 @@
                     Margin="31,73,19,93"
                     FontSize="36"
                     FontFamily="Microsoft YaHei UI Light" Height="44"
-                    Foreground="#FF888888" Canvas.ZIndex="-1" FontStyle="Normal" />
+                    Foreground="#FF888888" FontStyle="Normal" />
             </Grid>
         </Grid>
         <Grid Grid.Column="1">

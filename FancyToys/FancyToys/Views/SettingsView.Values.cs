@@ -5,7 +5,7 @@ using FancyToys.Utils;
 
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml;
-
+using NAudio.CoreAudioApi;
 
 namespace FancyToys.Views {
 
@@ -13,7 +13,6 @@ namespace FancyToys.Views {
         public double OpacitySliderValue {
             get => (double)(LocalSettings.Values[nameof(OpacitySliderValue)] ?? 0.6);
             set {
-                Dogger.Info($"OpacitySliderValue: {value}");
                 Notifier.Notify(Notifier.Keys.ServerPanelOpacity, value);
                 LocalSettings.Values[nameof(OpacitySliderValue)] = value;
                 OnSettingChanged?.Invoke(LocalSettings, nameof(OpacitySliderValue));
@@ -60,7 +59,6 @@ namespace FancyToys.Views {
         public double SystemVolumeMax {
             get => (double)(LocalSettings.Values[nameof(SystemVolumeMax)] ?? 20.0);
             set {
-                Dogger.Info($"Set SystemMaxVolume: {value}");
                 LocalSettings.Values[nameof(SystemVolumeMax)] = value;
                 OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeMax));
             }
@@ -70,13 +68,20 @@ namespace FancyToys.Views {
             get => (bool)(LocalSettings.Values[nameof(SystemVolumeLocked)] ?? true);
             set {
                 // TODO fixme: these vars' value don't follow SystemVolumeLockButton's check state 
+                LocalSettings.Values[nameof(SystemVolumeLocked)] = value;
                 SystemVolumeLockButton.Content = value ? "\xE72E" : "\xE785";
                 VolumeSlider.IsEnabled = !value;
-                LocalSettings.Values[nameof(SystemVolumeLocked)] = value;
                 OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeLocked));
+
+                if (_audioDevice == null || !value) return;
+                _currentSystemVolume = 0;
+                checkAndResetSystemVolume(_audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar);
             }
         }
 
+
+        private static MMDevice _audioDevice;
+        private static float _currentSystemVolume;
     }
 
 }

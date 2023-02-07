@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 using Windows.Storage;
 
@@ -11,7 +10,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
-using AudioSwitcher.AudioApi.CoreAudio;
+using NAudio.CoreAudioApi;
 
 using FancyToys.Logging;
 
@@ -53,13 +52,17 @@ namespace FancyToys.Views {
                 });
             }
             InitializeDefaultSettings();
-
-            // run background tasks;
-            CheckSystemVolume();
         }
 
         private void InitializeDefaultSettings() {
             LogLevel = LogLevel.Trace;
+
+            // init volume locker
+            MMDeviceEnumerator enumer = new();
+            _audioDevice = enumer.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
+            _audioDevice.AudioEndpointVolume.OnVolumeNotification += AudioEndpointVolume_OnVolumeNotification;
+            SystemVolumeLocked = SystemVolumeLocked;
 
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
@@ -146,23 +149,24 @@ namespace FancyToys.Views {
             SystemVolumeLocked = !SystemVolumeLocked;
         }
 
-        private void CheckSystemVolume() {
-            CoreAudioDevice defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+        private void AudioEndpointVolume_OnVolumeNotification(AudioVolumeNotificationData data) {
+            Dogger.Trace($"{_currentSystemVolume}, {data.MasterVolume}");
+            checkAndResetSystemVolume(data.MasterVolume);
+        }
 
-            Task.Run(async () => {
-                Dogger.Debug($"system volume: {defaultPlaybackDevice.Volume}");
-
-                while (true) {
-                    double curVol = defaultPlaybackDevice.Volume;
-
-                    if (SystemVolumeLocked && curVol > SystemVolumeMax) {
-                        defaultPlaybackDevice.Volume = SystemVolumeMax;
-                        Dogger.Info($"Reset volume from {curVol} to {SystemVolumeMax}");
-                    }
-
-                    await Task.Delay(3000);
-                }
-            });
+        /// <summary>
+        /// set system volume to `SystemVolumeMax` if it's grater than SystemVolumeMax.
+        /// </summary>
+        /// <param name="deviceVolume"></param>
+        private void checkAndResetSystemVolume(float deviceVolume) {
+            if (SystemVolumeLocked && Math.Abs(deviceVolume - _currentSystemVolume) > 0.0001) {
+                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${SystemVolumeMax}");
+                float volume = Math.Min((float)deviceVolume, (float)SystemVolumeMax / 100);
+                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = volume;
+                _currentSystemVolume = volume;
+            } else {
+                _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
+            }
         }
     }
 
