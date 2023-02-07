@@ -8,13 +8,12 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.UI;
-using Windows.UI.Core;
 using Windows.UI.Text;
 
 using FancyToys.Logging;
 using FancyToys.Utils;
 
-using Microsoft.UI.Dispatching;
+using System.ComponentModel;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -26,13 +25,27 @@ namespace FancyToys.Views {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class ServerView: Page {
+    public sealed partial class ServerView: Page, INotifyPropertyChanged {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public static ServerView CurrentInstance { get; private set; }
-        private double FancyToysPanelOpacity { get; set; }
+        private double _fancyToysPanelOpacity;
+        private double FancyToysPanelOpacity {
+            get => _fancyToysPanelOpacity;
+            set {
+                _fancyToysPanelOpacity = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FancyToysPanelOpacity"));
+            }
+        }
 
         public unsafe ServerView() {
             InitializeComponent();
             CurrentInstance = this;
+
+            //fixed (double* p = &_fancyToysPanelOpacity) {
+            //    Notifier.Subscribe(Notifier.Keys.ServerPanelOpacity, p);
+            //}
+
 
             Notifier.Subscribe(Notifier.Keys.ServerPanelOpacity, (double opacity) => {
                 FancyToysPanelOpacity = opacity;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using FancyToys.Logging;
 
@@ -23,23 +24,12 @@ namespace FancyToys.Utils {
         }
 
         /// <summary>
-        /// value publisher register here
-        /// </summary>
-        /// <param name="key"></param>
-        /// <typeparam name="T"></typeparam>
-        public static void Register<T>(Keys key) where T: unmanaged {
-            if (container.ContainsKey(key) && container[key] is UnmanagedJar<T>) {
-                return;
-            }
-            container.Add(key, new UnmanagedJar<T>());
-        }
-
-        /// <summary>
         /// subscribe to value publisher
         /// </summary>
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <typeparam name="T"></typeparam>
+        [Obsolete]
         public static unsafe void Subscribe<T>(Keys key, T* value) where T: unmanaged {
             Dogger.Trace($"Notifier.Subscribe<{typeof(T).Name}>({key})");
             if (!container.TryGetValue(key, out object o) || o is not UnmanagedJar<T> jar) {
@@ -51,11 +41,13 @@ namespace FancyToys.Utils {
         }
 
         public static void Subscribe<T>(Keys key, NotifyHandler<T> handler) {
+            Dogger.Trace($"Notifier.Subscribe<{typeof(T).Name}>({key})");
             if (!hotel.TryGetValue(key, out object o) || o is not List<NotifyHandler<T>> list) {
                 list = new List<NotifyHandler<T>>();
                 hotel.Add(key, list);
             }
             list.Add(handler);
+            Dogger.Debug($"subscribe successed.");
         }
 
         /// <summary>
@@ -64,12 +56,20 @@ namespace FancyToys.Utils {
         /// <param name="key"></param>
         /// <param name="value"></param>
         /// <typeparam name="T"></typeparam>
-        public static void Notify<T>(Keys key, T value) where T: unmanaged {
-            if (!container.TryGetValue(key, out object obj) || obj is not UnmanagedJar<T> jar) {
-                Dogger.Warn("Notify return1");
-                return;
+        public static void Notify<T>(Keys key, T value) {
+            //if (!container.TryGetValue(key, out object obj) || obj is not UnmanagedJar<T> jar) {
+            //    Dogger.Warn($"Couldn't get unmanaged jar, {obj}");
+            //} else {
+            //    jar.Notify(value);
+            //}
+
+            if (!hotel.TryGetValue(key, out object o) || o is not List<NotifyHandler<T>> list) {
+                Dogger.Warn("Couldn't get managed jar.");
+            } else {
+                list.ForEach((handler) => {
+                    handler.Invoke(value);
+                });
             }
-            jar.Notify(value);
         }
         
         
@@ -77,7 +77,7 @@ namespace FancyToys.Utils {
             private readonly List<NotifyHandler<object>> room;
         }
 
-
+        [Obsolete]
         private unsafe class UnmanagedJar<T> where T: unmanaged {
             private T*[] jar;
             private int size;
