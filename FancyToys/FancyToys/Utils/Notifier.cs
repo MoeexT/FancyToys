@@ -64,7 +64,7 @@ namespace FancyToys.Utils {
             //}
 
             if (!hotel.TryGetValue(key, out object o) || o is not List<NotifyHandler<T>> list) {
-                Dogger.Warn("Couldn't get managed jar.");
+                Dogger.Warn($"Couldn't get managed jar: {key}: {value}");
             } else {
                 list.ForEach((handler) => {
                     handler.Invoke(value);
