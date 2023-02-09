@@ -159,11 +159,12 @@ namespace FancyToys.Views {
         /// </summary>
         /// <param name="deviceVolume"></param>
         private void checkAndResetSystemVolume(float deviceVolume) {
-            if (SystemVolumeLocked && Math.Abs(deviceVolume - _currentSystemVolume) > 0.0001) {
-                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${SystemVolumeMax}");
-                float volume = Math.Min((float)deviceVolume, (float)SystemVolumeMax / 100);
-                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = volume;
-                _currentSystemVolume = volume;
+            float systemVolume = (float)SystemVolumeMax / 100;
+            Dogger.Trace($"{deviceVolume}, {systemVolume}");
+            if (SystemVolumeLocked && Math.Abs(deviceVolume - _currentSystemVolume) > 0.0001 && deviceVolume > systemVolume) {
+                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = systemVolume;
+                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${systemVolume}");
+                _currentSystemVolume = systemVolume;
             } else {
                 _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
             }
