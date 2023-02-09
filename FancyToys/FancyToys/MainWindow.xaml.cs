@@ -58,9 +58,9 @@ namespace FancyToys {
                 new Category() {
                     Content = "Server",
                     Name = "ServerView",
-                    Glyph = "\uEA92",
+                    Glyph = "\uEB51",
                     Tooltip = "Debugging",
-                    Foreground = new SolidColorBrush(Colors.Red),
+                    Foreground = new SolidColorBrush(Colors.LightGreen),
                 },
             };
             this.InitializeComponent();
