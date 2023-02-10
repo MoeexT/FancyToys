@@ -40,6 +40,7 @@
         <None Remove="Images\StoreLogo.png" />
         <None Remove="Images\Wide310x150Logo.scale-200.png" />
         <None Remove="Package.appxmanifest" />
+        <None Remove="Views\TinyToolsView.xaml" />
         <None Remove="Views\VolumeView.xaml" />
     </ItemGroup>
     <ItemGroup>
@@ -94,5 +95,11 @@
 
     <ItemGroup>
       <Folder Include="Tasks\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\TinyToolsView.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
 </Project>

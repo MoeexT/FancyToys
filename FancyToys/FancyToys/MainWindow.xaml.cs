@@ -62,6 +62,13 @@ namespace FancyToys {
                     Tooltip = "Debugging",
                     Foreground = new SolidColorBrush(Colors.LightGreen),
                 },
+                new Category() {
+                    Content = "TonyTools",
+                    Name = "TinyToolsView",
+                    Glyph = "\uE74C",
+                    Tooltip = "Tiny tools here",
+                    Foreground = new SolidColorBrush(Colors.LightBlue),
+                },
             };
             this.InitializeComponent();
             NavView.SelectedItem = Categories.First();
