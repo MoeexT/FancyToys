@@ -15,6 +15,8 @@ using FancyToys.Utils;
 
 using System.ComponentModel;
 
+using Microsoft.UI.Xaml.Input;
+
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -102,6 +104,10 @@ namespace FancyToys.Views {
 
         private void FancyToysPanelLoaded(object sender, RoutedEventArgs e) {
             Dogger.Flush();
+        }
+ 
+        private void KeyboardAccelerator_OnInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) {
+            FancyToysPanel.Blocks.Clear();
         }
     }
 

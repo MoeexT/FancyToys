@@ -10,6 +10,16 @@ using NAudio.CoreAudioApi;
 namespace FancyToys.Views {
 
     public partial class SettingsView {
+        public void InitializeValues() {
+            OpacitySliderValue = OpacitySliderValue;
+            MonitorFontColor = MonitorFontColor;
+            CurrentTheme = CurrentTheme;
+            LogLevel = LogLevel;
+            StdLevel = StdLevel;
+            SystemVolumeMax = SystemVolumeMax;
+            SystemVolumeLocked = SystemVolumeLocked;
+        }
+        
         public double OpacitySliderValue {
             get => (double)(LocalSettings.Values[nameof(OpacitySliderValue)] ?? 0.6);
             set {

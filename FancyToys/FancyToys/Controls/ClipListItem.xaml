@@ -5,6 +5,7 @@
     xmlns:local="using:FancyToys.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:animations="using:CommunityToolkit.WinUI.UI.Animations"
     mc:Ignorable="d"
     d:DesignHeight="80"
     d:DesignWidth="200">
@@ -14,64 +15,76 @@
         <CommandBarFlyout x:Name="CommandBarFlyout" Placement="Right">
             <AppBarButton x:Name="PinBarButton" Click="PinButton_Click">
                 <AppBarButton.Icon>
-                    <FontIcon x:Name="PinButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE718;" ToolTipService.ToolTip="Pin" />
+                    <FontIcon x:Name="PinButtonIcon" Glyph="&#xE718;" ToolTipService.ToolTip="Pin" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton x:Name="SendBarButton" Click="SendButton_Click">
                 <AppBarButton.Icon>
-                    <FontIcon x:Name="SendButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE89C;" ToolTipService.ToolTip="Send to phone" />
+                    <FontIcon x:Name="SendButtonIcon" Glyph="&#xE89C;" ToolTipService.ToolTip="Send to phone" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton x:Name="CopyBarButton" Click="CopyButton_Click">
                 <AppBarButton.Icon>
-                    <FontIcon x:Name="CopyButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE8C8;" ToolTipService.ToolTip="Copy" />
+                    <FontIcon x:Name="CopyButtonIcon" Glyph="&#xE8C8;" ToolTipService.ToolTip="Copy" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton x:Name="DeleteBarButton" Click="DeleteButton_Click">
                 <AppBarButton.Icon>
-                    <FontIcon x:Name="DeleteButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE74D;" ToolTipService.ToolTip="Delete" />
+                    <FontIcon x:Name="DeleteButtonIcon" Glyph="&#xE74D;" ToolTipService.ToolTip="Delete" />
                 </AppBarButton.Icon>
             </AppBarButton>
         </CommandBarFlyout>
     </UserControl.Resources>
-    <Grid Margin="0 10 0 0">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <!-- <ColumnDefinition Width="30" /> -->
-        </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0" x:Name="Grid0"
-              ContextFlyout="{StaticResource CommandBarFlyout}">
-            <Border x:Name="Border" BorderThickness="3" Padding="5">
-                <StackPanel x:Name="ClipJar">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="20" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0"
-                                Height="14"
-                                Width="14"
-                                Margin="0, 4, 0, 0"
-                                Padding="0">
-                            <FontIcon x:Name="ClipTypeIcon"
-                                      FontSize="12"
-                                      FontFamily="Segoe MDL2 Assets" />
-                        </Border>
-                        <Border Grid.Column="1"></Border>
-                        <Border Grid.Column="2">
-                            <TextBlock
-                                x:Name="DateTimeBlock"
-                                FontSize="11"
-                                Height="14"
-                                Margin="0, 4, 0, 0"
-                                Padding="0, 2, 0, 0"
-                                Foreground="SlateGray"
-                                TextAlignment="Right" />
-                        </Border>
-                    </Grid>
+
+    <Border x:Name="ClipItemBorder"
+            Margin="2 0 5 0"
+            CornerRadius="0"
+            Padding="10 10 10 3"
+            BorderThickness="2">
+        <Grid ContextFlyout="{StaticResource CommandBarFlyout}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" x:Name="ClipJar" />
+
+            <Grid Grid.Row="1" Margin="0 5 0 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" x:Name="StateJar" Orientation="Horizontal">
+                    <!-- <StackPanel.Resources> -->
+                    <!--     <Storyboard x:Name="EnterStoryBoard" TargetName="StateIcon" TargetProperty="Visibility"> -->
+                    <!--         <DoubleAnimation Duration="500" d:IsOptimized="True"> -->
+                    <!--             <DoubleAnimation.EasingFunction> -->
+                    <!--                 <CircleEase EasingMode="EaseInOut" /> -->
+                    <!--             </DoubleAnimation.EasingFunction> -->
+                    <!--         </DoubleAnimation> -->
+                    <!--     </Storyboard> -->
+                    <!-- </StackPanel.Resources> -->
+                    <!-- <StackPanel.ChildrenTransitions> -->
+                    <!--     <TransitionCollection> -->
+                    <!--         ~1~ <EntranceThemeTransition IsStaggeringEnabled="True" /> @1@ -->
+                    <!--     </TransitionCollection> -->
+                    <!-- </StackPanel.ChildrenTransitions> -->
+                    <FontIcon x:Name="ClipTypeIcon" Margin="2 0 10 0" FontSize="16" />
+                    <Border x:Name="StateIconBorder" Visibility="Collapsed">
+                        <animations:Implicit.ShowAnimations>
+                            <animations:OpacityAnimation Duration="0:0:1" From="0" To="1" />
+                        </animations:Implicit.ShowAnimations>
+                        <animations:Implicit.HideAnimations>
+                            <animations:OpacityAnimation Duration="0:0:1" From="1" To="0" />
+                        </animations:Implicit.HideAnimations>
+                    </Border>
+                    <Rectangle Height="20" Fill="LightBlue" />
+
                 </StackPanel>
-            </Border>
+                <Rectangle Grid.Column="1" x:Name="PlaceHolderForRightClick" Fill="Transparent" DoubleTapped="PlaceHolderForRightClick_OnDoubleTapped" />
+                <TextBlock Grid.Column="2" x:Name="DateTimeBlock" FontSize="11" Foreground="SlateGray" TextAlignment="Right" />
+            </Grid>
         </Grid>
-    </Grid>
+    </Border>
 </UserControl>

@@ -55,14 +55,13 @@ namespace FancyToys.Views {
         }
 
         private void InitializeDefaultSettings() {
-            LogLevel = LogLevel.Trace;
+            InitializeValues();
 
             // init volume locker
             MMDeviceEnumerator enumer = new();
             _audioDevice = enumer.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
             _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
             _audioDevice.AudioEndpointVolume.OnVolumeNotification += AudioEndpointVolume_OnVolumeNotification;
-            SystemVolumeLocked = SystemVolumeLocked;
 
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
@@ -101,7 +100,7 @@ namespace FancyToys.Views {
         }
 
         private void StdLevelChanged(object sender, SelectionChangedEventArgs e) {
-            if (sender != StdLevelComboBox) return;
+            if (!ReferenceEquals(sender, StdLevelComboBox)) return;
             ComboBoxItem item = (ComboBoxItem)StdLevelComboBox.SelectedItem;
             TextBlock header = (TextBlock)StdLevelComboBox.Header;
             Brush originHeaderForeground = header!.Foreground;
@@ -150,7 +149,6 @@ namespace FancyToys.Views {
         }
 
         private void AudioEndpointVolume_OnVolumeNotification(AudioVolumeNotificationData data) {
-            Dogger.Trace($"{_currentSystemVolume}, {data.MasterVolume}");
             checkAndResetSystemVolume(data.MasterVolume);
         }
 
@@ -159,12 +157,13 @@ namespace FancyToys.Views {
         /// </summary>
         /// <param name="deviceVolume"></param>
         private void checkAndResetSystemVolume(float deviceVolume) {
-            float systemVolume = (float)SystemVolumeMax / 100;
-            Dogger.Trace($"{deviceVolume}, {systemVolume}");
-            if (SystemVolumeLocked && Math.Abs(deviceVolume - _currentSystemVolume) > 0.0001 && deviceVolume > systemVolume) {
-                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = systemVolume;
-                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${systemVolume}");
-                _currentSystemVolume = systemVolume;
+            float max = (float)SystemVolumeMax / 100;
+            Dogger.Trace($"{_currentSystemVolume}, {deviceVolume}, {max}");
+            
+            if (SystemVolumeLocked && deviceVolume > max && Math.Abs(deviceVolume - _currentSystemVolume) > 0.001) {
+                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = max;
+                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${max}");
+                _currentSystemVolume = max;
             } else {
                 _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
             }

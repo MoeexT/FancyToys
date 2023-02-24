@@ -45,15 +45,22 @@ namespace FancyToys {
                     Content = "Teleport",
                     Name = "TeleportView",
                     Glyph = "\uE95A",
-                    Tooltip = "Copy & Notify",
+                    Tooltip = "Clipboard manager",
                     Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0, 0x7b, 0xfe))
                 },
                 new Category() {
                     Content = "Nursery",
                     Name = "NurseryView",
                     Glyph = "\uE9F5",
-                    Tooltip = "Process Manager",
-                    Foreground = new SolidColorBrush(Colors.Aqua),
+                    Tooltip = "Process manager",
+                    Foreground = new SolidColorBrush(Colors.Silver),
+                },
+                new Category() {
+                    Content = "TinyTools",
+                    Name = "TinyToolsView",
+                    Glyph = "\uE74C",
+                    Tooltip = "Tiny tool set",
+                    Foreground = new SolidColorBrush(Colors.LightSteelBlue),
                 },
                 new Category() {
                     Content = "Server",
@@ -61,13 +68,6 @@ namespace FancyToys {
                     Glyph = "\uEB51",
                     Tooltip = "Debugging",
                     Foreground = new SolidColorBrush(Colors.LightGreen),
-                },
-                new Category() {
-                    Content = "TonyTools",
-                    Name = "TinyToolsView",
-                    Glyph = "\uE74C",
-                    Tooltip = "Tiny tools here",
-                    Foreground = new SolidColorBrush(Colors.LightBlue),
                 },
             };
             this.InitializeComponent();

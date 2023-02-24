@@ -23,11 +23,16 @@
                         <SolidColorBrush Color="Black" Opacity="{x:Bind FancyToysPanelOpacity, Mode=OneWay}" />
                     </Border.Background>
                     <ScrollViewer Name="FancyToysScrollViewer" VerticalScrollBarVisibility="Auto">
-                        <RichTextBlock Name="FancyToysPanel"
-                                       Loaded="FancyToysPanelLoaded" />
+                        <RichTextBlock Name="FancyToysPanel" Loaded="FancyToysPanelLoaded">
+                            <RichTextBlock.KeyboardAccelerators>
+                                <!-- <KeyboardAccelerator Modifiers="Control" Key="A"></KeyboardAccelerator> -->
+                                <KeyboardAccelerator Modifiers="Control" Key="L"
+                                                     Invoked="KeyboardAccelerator_OnInvoked"
+                                                     ScopeOwner="{x:Bind AppListPivot}" />
+                            </RichTextBlock.KeyboardAccelerators>
+                        </RichTextBlock>
                     </ScrollViewer>
                 </Border>
-
             </PivotItem>
         </Pivot>
 

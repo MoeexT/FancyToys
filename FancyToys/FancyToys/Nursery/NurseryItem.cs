@@ -80,7 +80,7 @@ namespace FancyToys.Nursery {
                 }
             }
 
-            // TODO InvalidOperationExcepiton: process has exited.
+            // TODO InvalidOperationException: process has exited.
             if (!Ps.HasExited) {
                 CpuCounter = new PerformanceCounter("Process", "% Processor Time", Ps.ProcessName);
                 MemCounter = new PerformanceCounter("Process", "Working Set - Private", Ps.ProcessName);
