@@ -57,12 +57,6 @@ namespace FancyToys.Views {
         private void InitializeDefaultSettings() {
             InitializeValues();
 
-            // init volume locker
-            MMDeviceEnumerator enumer = new();
-            _audioDevice = enumer.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-            _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
-            _audioDevice.AudioEndpointVolume.OnVolumeNotification += AudioEndpointVolume_OnVolumeNotification;
-
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
                     DarkThemeButton.IsChecked = true;
@@ -138,34 +132,6 @@ namespace FancyToys.Views {
             } else {
                 MonitorFontColor = new SolidColorBrush(Colors.White);
                 opacityPreview.Tag = "White";
-            }
-        }
-
-        private void LockIcon_Click(object sender, RoutedEventArgs e) {
-            if (sender is not ToggleButton) {
-                return;
-            }
-            SystemVolumeLocked = !SystemVolumeLocked;
-        }
-
-        private void AudioEndpointVolume_OnVolumeNotification(AudioVolumeNotificationData data) {
-            checkAndResetSystemVolume(data.MasterVolume);
-        }
-
-        /// <summary>
-        /// set system volume to `SystemVolumeMax` if it's grater than SystemVolumeMax.
-        /// </summary>
-        /// <param name="deviceVolume"></param>
-        private void checkAndResetSystemVolume(float deviceVolume) {
-            float max = (float)SystemVolumeMax / 100;
-            Dogger.Trace($"{_currentSystemVolume}, {deviceVolume}, {max}");
-            
-            if (SystemVolumeLocked && deviceVolume > max && Math.Abs(deviceVolume - _currentSystemVolume) > 0.001) {
-                _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = max;
-                Dogger.Info($"Reset system volume from: ${deviceVolume} to ${max}");
-                _currentSystemVolume = max;
-            } else {
-                _currentSystemVolume = _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar;
             }
         }
     }

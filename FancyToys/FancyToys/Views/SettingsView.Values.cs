@@ -16,8 +16,6 @@ namespace FancyToys.Views {
             CurrentTheme = CurrentTheme;
             LogLevel = LogLevel;
             StdLevel = StdLevel;
-            SystemVolumeMax = SystemVolumeMax;
-            SystemVolumeLocked = SystemVolumeLocked;
         }
         
         public double OpacitySliderValue {
@@ -66,32 +64,6 @@ namespace FancyToys.Views {
             }
         }
 
-        public double SystemVolumeMax {
-            get => (double)(LocalSettings.Values[nameof(SystemVolumeMax)] ?? 20.0);
-            set {
-                LocalSettings.Values[nameof(SystemVolumeMax)] = value;
-                OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeMax));
-            }
-        }
-
-        public bool SystemVolumeLocked {
-            get => (bool)(LocalSettings.Values[nameof(SystemVolumeLocked)] ?? true);
-            set {
-                // TODO fixme: these vars' value don't follow SystemVolumeLockButton's check state 
-                LocalSettings.Values[nameof(SystemVolumeLocked)] = value;
-                SystemVolumeLockButton.Content = value ? "\xE72E" : "\xE785";
-                VolumeSlider.IsEnabled = !value;
-                OnSettingChanged?.Invoke(LocalSettings, nameof(SystemVolumeLocked));
-
-                if (_audioDevice == null || !value) return;
-                _currentSystemVolume = 0;
-                checkAndResetSystemVolume(_audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar);
-            }
-        }
-
-
-        private static MMDevice _audioDevice;
-        private static float _currentSystemVolume;
     }
 
 }
