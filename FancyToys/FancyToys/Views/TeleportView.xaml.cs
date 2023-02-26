@@ -14,9 +14,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-using FancyToys.Controls;
 using FancyToys.Logging;
 using FancyToys.Utils;
+using FancyToys.Service.Teleport;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -31,7 +31,7 @@ namespace FancyToys.Views {
     public sealed partial class TeleportView: Page {
 
         [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
-        private ObservableCollection<ClipListItem> ClipList;
+        private ObservableCollection<ClipItem> ClipList;
         private bool _allowClip;
         private bool _allowSimilarWithFormer;
         private readonly Messenger _teleportServer;
@@ -79,7 +79,7 @@ namespace FancyToys.Views {
 
             _allowClip = true;
             bool allowSpanClip = true;
-            ClipList = new ObservableCollection<ClipListItem>();
+            ClipList = new ObservableCollection<ClipItem>();
             TestConnectionStatusContainer.Child = _DisconnectedIcon;
 
             _teleportServer = new Messenger() {
@@ -106,8 +106,8 @@ namespace FancyToys.Views {
             Clipboard.ContentChanged += async (_, _) => {
                 if (!_allowClip || !allowSpanClip) return;
 
-                ClipListItem former = ClipList[0];
-                ClipListItem newItem = await CreateContent(Clipboard.GetContent());
+                ClipItem former = ClipList[0];
+                ClipItem newItem = await CreateContent(Clipboard.GetContent());
 
                 // set clip content failed
                 if (newItem is null) {
@@ -135,15 +135,15 @@ namespace FancyToys.Views {
             }
         }
 
-        private async Task<ClipListItem> CreateContent(DataPackageView package) {
-            ClipListItem newer = new() {
+        private async Task<ClipItem> CreateContent(DataPackageView package) {
+            ClipItem newer = new() {
                 TeleportServer = _teleportServer
             };
 
             if (!await newer.SetContent(package)) {
                 return null;
             }
-            
+
             newer.OnDelete += (item) => {
                 ClipList.Remove(item);
             };
@@ -155,28 +155,28 @@ namespace FancyToys.Views {
         // --------------------------------------------------------------------------------------------
 
         private void PinButton_OnClick(object sender, RoutedEventArgs e) {
-            bool allPined = ClipListView.SelectedItems.Cast<ClipListItem>().Aggregate(true, (current, selectedItem) => current & selectedItem.Pinned);
+            bool allPined = ClipListView.SelectedItems.Cast<ClipItem>().Aggregate(true, (current, selectedItem) => current & selectedItem.Pinned);
 
-            foreach (ClipListItem selectedItem in ClipListView.SelectedItems) {
+            foreach (ClipItem selectedItem in ClipListView.SelectedItems) {
                 selectedItem.Pinned = !allPined;
             }
         }
 
         private void SendButton_OnClick(object sender, RoutedEventArgs e) {
-            foreach (ClipListItem selectedItem in ClipListView.SelectedItems) {
+            foreach (ClipItem selectedItem in ClipListView.SelectedItems) {
                 selectedItem.SendClipContent();
             }
         }
 
         private void CopyButton_OnClick(object sender, RoutedEventArgs e) {
-            if (ClipListView.SelectedItems.First() is not ClipListItem first) {
+            if (ClipListView.SelectedItems.First() is not ClipItem first) {
                 return;
             }
             first.CopyToClipboard();
         }
 
         private void DeleteButton_OnClick(object sender, RoutedEventArgs e) {
-            List<ClipListItem> selectedItems = ClipListView.SelectedItems.Cast<ClipListItem>().ToList();
+            List<ClipItem> selectedItems = ClipListView.SelectedItems.Cast<ClipItem>().ToList();
             selectedItems.ForEach(item => ClipList.Remove(item));
         }
 
@@ -194,7 +194,7 @@ namespace FancyToys.Views {
         }
 
         private void ClearButton_OnClick(object sender, RoutedEventArgs e) {
-            List<ClipListItem> removeList = ClipList.Where(clipListItem => !clipListItem.Pinned).ToList();
+            List<ClipItem> removeList = ClipList.Where(clipListItem => !clipListItem.Pinned).ToList();
             removeList.ForEach((item => ClipList.Remove(item)));
         }
 

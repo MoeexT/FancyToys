@@ -14,14 +14,15 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-using FancyToys.Logging;
 
+namespace FancyToys.Service.Teleport;
 
-namespace FancyToys.Controls;
-
-public partial class ClipListItem {
+public partial class ClipItem {
     public async Task<bool> SetContent(DataPackageView package) {
         // Not support yet: rtf, html,
+        if (package.AvailableFormats.Count == 0) {
+            return false;
+        }
 
         // copy multiple files once
         if (package.Contains("FileDrop") || (
@@ -43,8 +44,6 @@ public partial class ClipListItem {
 
             StackPanel panel = new();
             ClipStorageItems = await package.GetStorageItemsAsync();
-
-            Dogger.Info($"file length: {ClipStorageItems.Count}");
 
             for (int i = 0; i < ClipStorageItems.Count; i++) {
                 IStorageItem storageItem = ClipStorageItems[i];

@@ -1,8 +1,4 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -18,16 +14,19 @@ using FancyToys.Logging;
 using FancyToys.Utils;
 
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 
-namespace FancyToys.Controls {
+namespace FancyToys.Service.Teleport {
 
-    public sealed partial class ClipListItem {
+    public sealed partial class ClipItem {
         public enum ClipType {
             Text = 0,
             Image = 1,
@@ -35,7 +34,7 @@ namespace FancyToys.Controls {
             Uri = 3,
         }
 
-        public delegate void OnDeleteButtonClicked(ClipListItem item);
+        public delegate void OnDeleteButtonClicked(Service.Teleport.ClipItem item);
         public event OnDeleteButtonClicked OnDelete;
 
         public Messenger TeleportServer;
@@ -153,7 +152,7 @@ namespace FancyToys.Controls {
             }
         }
 
-        public ClipListItem() {
+        public ClipItem() {
             InitializeComponent();
             DateTimeBlock.Text = $"{DateTime.Now:u}";
         }
@@ -264,7 +263,7 @@ namespace FancyToys.Controls {
         }
 
         public new bool Equals(object obj) {
-            if (obj is not ClipListItem another) {
+            if (obj is not Service.Teleport.ClipItem another) {
                 Dogger.Info(obj.ToString());
                 return false;
             }
@@ -273,8 +272,6 @@ namespace FancyToys.Controls {
                 Dogger.Info(another.ContentType.ToString());
                 return false;
             }
-
-            Dogger.Info($"{this.ToString()}, {another.ToString()}");
 
             return ContentType switch {
                 ClipType.File => ((Func<bool>)(() => {
