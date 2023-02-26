@@ -5,6 +5,7 @@
     xmlns:local="using:FancyToys.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:animations="using:CommunityToolkit.WinUI.UI.Animations"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -49,6 +50,9 @@
                 </SplitView.Pane>
                 <Border Margin="30">
                     <StackPanel>
+                        <animations:Implicit.ShowAnimations>
+                            <animations:OpacityAnimation Duration="0:0:1" From="0" To="1" />
+                        </animations:Implicit.ShowAnimations>
                         <TextBlock x:Name="DefaultView" FontSize="36" Text="Expect nice things." Visibility="Collapsed" />
                         <StackPanel x:Name="VolumeLockerView">
                             <TextBlock Text="System Volume Locker" FontSize="26" />

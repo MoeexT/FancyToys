@@ -31,7 +31,6 @@ namespace FancyToys.Views {
 
         public TinyToolsView() {
             InitializeComponent();
-            // InitializeVolumeLockerControls();
 
             // init volume locker
             MMDeviceEnumerator enumer = new();
@@ -53,7 +52,6 @@ namespace FancyToys.Views {
         /// <param name="deviceVolume"></param>
         private void checkAndResetSystemVolume(float deviceVolume) {
             float max = (float)SystemVolumeMax / 100;
-            Dogger.Trace($"{_currentSystemVolume}, {deviceVolume}, {max}");
 
             if (SystemVolumeLocked && deviceVolume > max && Math.Abs(deviceVolume - _currentSystemVolume) > 0.001) {
                 _audioDevice.AudioEndpointVolume.MasterVolumeLevelScalar = max;
