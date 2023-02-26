@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-using NLog.LayoutRenderers;
 
-
-namespace FancyToys.Nursery {
+namespace FancyToys.Service.Nursery {
 
     public class ProcessStatistic: INotifyPropertyChanged {
 
@@ -34,18 +32,18 @@ namespace FancyToys.Nursery {
             }
         }
 
-        public string CPU { get => $"{cpu:F}%"; }
+        public string CPU => $"{cpu:F}%";
 
-        public string Memory { get => memory < GB ? $"{(int)memory >> 10:N0}KB" : $"{(int)memory >> 20:N0}MB"; }
+        public string Memory => memory < GB ? $"{(int)memory >> 10:N0}KB" : $"{(int)memory >> 20:N0}MB";
 
         public void SetCPU(float _cpu) {
             cpu = _cpu;
-            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(CPU));
         }
 
         public void SetMemory(float mem) {
             memory = mem;
-            RaisePropertyChanged();
+            RaisePropertyChanged(nameof(Memory));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

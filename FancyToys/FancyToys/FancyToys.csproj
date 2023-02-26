@@ -40,6 +40,7 @@
         <None Remove="Images\StoreLogo.png" />
         <None Remove="Images\Wide310x150Logo.scale-200.png" />
         <None Remove="Package.appxmanifest" />
+        <None Remove="Service\Nursery\NurseryItem.xaml" />
         <None Remove="Views\TinyToolsView.xaml" />
         <None Remove="Views\VolumeView.xaml" />
     </ItemGroup>
@@ -96,6 +97,12 @@
 
     <ItemGroup>
       <Folder Include="Tasks\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Service\Nursery\NurseryItem.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
 
     <ItemGroup>
