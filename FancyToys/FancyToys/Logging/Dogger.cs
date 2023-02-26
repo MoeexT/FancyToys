@@ -42,7 +42,7 @@ namespace FancyToys.Logging {
         public static void Fatal(string msg, int depth = 1) => Show(msg, LogLevel.Fatal, depth + 1);
 
         private static void Show(string s, LogLevel level, int depth) {
-            if (level <= LogLevel) return;
+            if (level < LogLevel) return;
 
             Dispatch(new LogStruct {
                 Level = level,

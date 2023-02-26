@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
-using Windows.ApplicationModel.DataTransfer;
-
-using FancyToys.Controls.Dialogs;
 using FancyToys.Logging;
-using FancyToys.Nursery;
+using FancyToys.Service.Nursery;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -21,139 +17,31 @@ namespace FancyToys.Views {
         /// Initialize a new bored process, and create a ToggleSwitch represents this process showing at frontend.
         /// </summary>
         /// <param name="pathName"></param>
-        private void Add(string pathName) {
-            if (!File.Exists(pathName)) {
-                Dogger.Error($"No such file: ${pathName}");
+        private void AddFile(string pathName) {
+            if (!NurseryItem.WithPath(pathName, out NurseryItem item)) {
                 return;
             }
 
-            NurseryItem item = new(pathName, Path.GetFileName(pathName));
-            NurseryProcesses[item.NurseryId] = item;
-
-            ToggleSwitch ts = NewSwitch(item.NurseryId, pathName);
-            item.Switch = ts;
-            ProcessSwitchList.Items.Add(ts);
-
-            item.OnProcessExited += (i) => {
-                DispatcherQueue.TryEnqueue(() => {
-                        ts.IsOn = false;
-                    }
-                );
+            item.OnProcessLaunched += (_) => {
+                _informationManager.run();
             };
-            Dogger.Trace($"add {item.NurseryId} {pathName}");
+            NurseryList.Add(item);
+            Dogger.Info($"File path {pathName} add {NurseryList.Count}");
         }
 
-        private async void Launch(NurseryItem item) {
-            // if (!await Task.Run(item.Launch)) {
-            //     return;
-            // }
-            //
-            // _informationManager.run();
-            await Task.Run(() => {
-                    item.Launch();
-                    _informationManager.run();
-                }
-            );
-        }
-
-        private void Stop(NurseryItem item) {
-            if (item.IsRunning) {
-                Task.Run(item.Stop);
+        private void AddProcess(Process process) {
+            if (!NurseryItem.WithProcess(process, out NurseryItem item)) {
+                return;
             }
+            _informationManager.run();
+            NurseryList.Add(item);
+            Dogger.Info($"Alive process \"{process.ProcessName}\" add.");
         }
 
-        private async void Remove(int pid) {
-            if (!NurseryProcesses.TryGetValue(pid, out NurseryItem item)) return;
-            bool confirm = true;
-
-            if (item.Switch.IsOn) {
-                confirm &= await MessageDialog.Warn("进程未退出", "继续操作可能丢失工作内容", "仍然退出");
-            }
-            if (!confirm) return;
-
-            ProcessSwitchList.Items!.Remove(item.Switch);
-            NurseryProcesses.Remove(pid);
-
-            // dispose the process instance
-            item.Dispose();
-        }
-
-        /// <summary>
-        /// generate a ToggleSwitch for showing at frontend.
-        /// </summary>
-        /// <param name="pid"></param>
-        /// <param name="pathName"></param>
-        /// <returns></returns>
-        private ToggleSwitch NewSwitch(int pid, string pathName) {
-            string pn = Path.GetFileName(pathName);
-
-            ToggleSwitch twitch = new() {
-                IsOn = false,
-                Tag = pid,
-                FontSize = 14,
-                ContextFlyout = NewMenu(pid, pathName),
-                OnContent = pn + " is running",
-                OffContent = pn + " stopped"
-            };
-            ToolTipService.SetToolTip(twitch, pathName);
-
-            twitch.Toggled += (sender, e) => {
-                if (sender is not ToggleSwitch ts) {
-                    Dogger.Debug($"Sender not ToggleSwitch{sender}");
-                    return;
-                }
-                Dogger.Info($"Toggle: {ts.IsOn}");
-                if (!NurseryProcesses.TryGetValue(pid, out NurseryItem item)) return;
-
-                if (ts.IsOn) {
-                    Launch(item);
-                } else {
-                    Stop(item);
-                }
-            };
-            // NurseryProcesses[pid].Switch = twitch;
-
-            return twitch;
-        }
-
-        private MenuFlyout NewMenu(int pid, string pathName) {
-            MenuFlyout menu = new();
-
-            MenuFlyoutItem ai = new() {
-                Icon = new FontIcon { Glyph = "\uE723" },
-                Tag = pid,
-                Text = "参数",
-            };
-            ai.Click += ArgsButtonClick;
-
-            MenuFlyoutItem ci = new() {
-                Icon = new FontIcon { Glyph = "\uE8C8" },
-                Tag = pid,
-                Text = "复制文件名",
-            };
-
-            ci.Click += (s, e) => {
-                DataPackage dataPackage = new();
-                dataPackage.SetText(pathName);
-                Clipboard.SetContent(dataPackage);
-            };
-            ToolTipService.SetToolTip(ci, pathName);
-
-            MenuFlyoutItem ri = new() {
-                Icon = new FontIcon { Glyph = "\uE74D" },
-                Tag = pid,
-                Text = "删除",
-            };
-
-            ri.Click += (s, e) => {
-                Remove(pid);
-            };
-
-            menu.Items.Add(ai);
-            menu.Items.Add(ci);
-            menu.Items.Add(ri);
-
-            return menu;
+        public void UpdateProcessInformation() {
+            DispatcherQueue.TryEnqueue(() => {
+                ProcessInfoList.Clear();
+            });
         }
 
         public void UpdateProcessInformation(Dictionary<int, ProcessStatistic> alivePs) {
@@ -206,7 +94,7 @@ namespace FancyToys.Views {
             };
             style.Setters.Add(new Setter(property, value));
             style.Setters.Add(new Setter(Control.PaddingProperty, "10,0,0,0"));
-            ProcessSwitchList.ItemContainerStyle = style;
+            NurseryListView.ItemContainerStyle = style;
 
             return style;
         }

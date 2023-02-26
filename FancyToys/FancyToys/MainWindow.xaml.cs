@@ -45,22 +45,29 @@ namespace FancyToys {
                     Content = "Teleport",
                     Name = "TeleportView",
                     Glyph = "\uE95A",
-                    Tooltip = "Copy & Notify",
+                    Tooltip = "Clipboard manager",
                     Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0, 0x7b, 0xfe))
                 },
                 new Category() {
                     Content = "Nursery",
                     Name = "NurseryView",
                     Glyph = "\uE9F5",
-                    Tooltip = "Process Manager",
-                    Foreground = new SolidColorBrush(),
+                    Tooltip = "Process manager",
+                    Foreground = new SolidColorBrush(Colors.Silver),
+                },
+                new Category() {
+                    Content = "TinyTools",
+                    Name = "TinyToolsView",
+                    Glyph = "\uE74C",
+                    Tooltip = "Tiny tool set",
+                    Foreground = new SolidColorBrush(Colors.LightSteelBlue),
                 },
                 new Category() {
                     Content = "Server",
                     Name = "ServerView",
-                    Glyph = "\uEA92",
+                    Glyph = "\uEB51",
                     Tooltip = "Debugging",
-                    Foreground = new SolidColorBrush(Colors.Red),
+                    Foreground = new SolidColorBrush(Colors.LightGreen),
                 },
             };
             this.InitializeComponent();
@@ -79,10 +86,14 @@ namespace FancyToys {
             Dogger.Info("FancyToys started.");
 
             CurrentWindow = this;
-            
+
             // no UIElement is set for titlebar, fallback titlebar is created
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(AppTitleBar);  // this line is optional as by it is null by default
+            SetTitleBar(AppTitleBar); // this line is optional as by it is null by default
+
+            // _ = new ServerView();
+            _ = new TinyToolsView();
+            _ = new SettingsView();
         }
 
         private void NavViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {

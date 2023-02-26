@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
-using FancyToys.Controls.Dialogs;
+using WinRT.Interop;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 using CommunityToolkit.WinUI.UI.Controls;
 
-using FancyToys.Logging;
-using FancyToys.Nursery;
-
+using FancyToys.Controls.Dialogs;
+using FancyToys.Service.Nursery;
 
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -27,17 +27,19 @@ namespace FancyToys.Views {
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class NurseryView: Page {
+
+        // 进程控件信息
+        public ObservableCollection<NurseryItem> NurseryList { get; }
+
         // 进程资源信息
         private ObservableCollection<ProcessStatistic> ProcessInfoList { get; }
-        // 进程控件信息
-        public Dictionary<int, NurseryItem> NurseryProcesses { get; }
-        
+
         private readonly InformationManager _informationManager;
 
         public NurseryView() {
             InitializeComponent();
+            NurseryList = new ObservableCollection<NurseryItem>();
             ProcessInfoList = new ObservableCollection<ProcessStatistic>();
-            NurseryProcesses = new Dictionary<int, NurseryItem>();
             _informationManager = new InformationManager(this);
         }
 
@@ -53,7 +55,7 @@ namespace FancyToys.Views {
 
                 foreach (IStorageItem item in files) {
                     if (item.Name.EndsWith(".exe")) {
-                        Add(item.Path);
+                        AddFile(item.Path);
                     }
                 }
             } finally {
@@ -71,71 +73,83 @@ namespace FancyToys.Views {
         }
 
         private async void AddFileFlyoutItemClick(object sender, RoutedEventArgs e) {
+            IntPtr hwnd = WindowNative.GetWindowHandle(MainWindow.CurrentWindow);
+
             FileOpenPicker picker = new() {
                 ViewMode = PickerViewMode.Thumbnail,
                 SuggestedStartLocation = PickerLocationId.HomeGroup
             };
+            
+            InitializeWithWindow.Initialize(picker, hwnd);
             picker.FileTypeFilter.Add(".exe");
             StorageFile file = await picker.PickSingleFileAsync();
 
             // TODO: 可能选择多个文件
             if (file != null) {
-                Add(file.Path);
+                DispatcherQueue.TryEnqueue(() => {
+                    AddFile(file.Path);
+                });
             }
         }
 
         private void StopAllFlyoutItemClick(object sender, RoutedEventArgs e) {
-            if (ProcessSwitchList.Items == null) return;
-
-            foreach (ToggleSwitch ts in ProcessSwitchList.Items) {
-                if (ts.IsOn) {
-                    NurseryItem ni = NurseryProcesses[(int)ts.Tag];
-                    ni.Stop();
-                }
+            foreach (NurseryItem nurseryItem in NurseryList) {
+                nurseryItem.Stop();
             }
         }
 
-        private void RemoveAllFlyoutItemClick(object sender, RoutedEventArgs e) {
-            if (ProcessSwitchList.Items == null) return;
-
-            foreach (ToggleSwitch ts in ProcessSwitchList.Items) {
-                Remove((int)ts.Tag);
+        private async void RemoveAllFlyoutItemClick(object sender, RoutedEventArgs e) {
+            foreach (NurseryItem nurseryItem in NurseryList) {
+                await nurseryItem.Delete();
             }
+            NurseryList.Clear();
         }
 
-        private void HelpFlyoutItemClick(object sender, RoutedEventArgs e) { DropFileTechingTip.IsOpen = true; }
+        private async void SeizeProcessFlyoutItemClick(object sender, RoutedEventArgs e) {
+            InputDialog inputDialog = new("Nursery", "输入要捕获的进程id") {
+                XamlRoot = XamlRoot,
+            };
+            await inputDialog.ShowAsync();
 
-        private void AboutFlyoutItemClick(object sender, RoutedEventArgs e) {
-            _ = MessageDialog.Info("Nursery v0.1.3",
-                "Nursery is a simple daemon process manager powered by FancyServer and it will keep your application online.");
-        }
-
-        private async void ArgsButtonClick(object sender, RoutedEventArgs e) {
-            if (sender is not MenuFlyoutItem ai) {
-                Dogger.Error("args-button is null");
+            if (!inputDialog.isSaved) {
                 return;
             }
 
-            int pid = (int)ai.Tag;
-            NurseryItem ni = NurseryProcesses[pid];
-            
-            InputDialog inputDialog = new("Nursery", "输入参数", ni.Ps.StartInfo.Arguments);
-            await inputDialog.ShowAsync();
+            string content = inputDialog.inputContent.Trim();
 
-            if (inputDialog.isSaved) {
-                ni.Ps.StartInfo.Arguments = inputDialog.inputContent;
+            if (!int.TryParse(content, out int pid)) {
+                return;
             }
+
+            Process newProcess = Process.GetProcessById(pid);
+
+            MessageDialog dialog = new("Nursery", newProcess.ProcessName, "Ok", MessageDialog.MessageLevel.Notice) {
+                XamlRoot = XamlRoot,
+            };
+
+            await dialog.ShowAsync();
+            AddProcess(newProcess);
+        }
+
+        private void HelpFlyoutItemClick(object sender, RoutedEventArgs e) { DropFileTeachingTip.IsOpen = true; }
+
+        private async void AboutFlyoutItemClick(object sender, RoutedEventArgs e) {
+            // TODO set XamlRoot
+            await MessageDialog.Info("Nursery v0.1.3",
+                "Nursery is a light daemon powered by .net and it keeps your applications online.");
         }
 
         private void ListBoxSizeClick(object sender, RoutedEventArgs e) {
-            ProcessSwitchList.ItemContainerStyle = SetStyle(FrameworkElement.HeightProperty, ((MenuFlyoutItem)sender).Tag);
+            NurseryListView.ItemContainerStyle = SetStyle(FrameworkElement.HeightProperty, ((MenuFlyoutItem)sender).Tag);
         }
 
         private void DataGridSizeClick(object sender, RoutedEventArgs e) { }
 
         private void FlushSpeedClick(object sender, RoutedEventArgs e) {
-            // SettingsClerk.Clerk.STFlushTime = int.Parse((sender as MenuFlyoutItem).Tag as string);
-            Dogger.Warn("this feature is not implemented yet");
+            if (sender is not MenuFlyoutItem item) {
+                return;
+            }
+            _informationManager.UpdateSpan = (int)item.Tag;
         }
 
         private void ProcessGridSorting(object sender, DataGridColumnEventArgs e) {

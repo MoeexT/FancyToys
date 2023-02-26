@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage.Streams;
-using Windows.UI.Text;
+using Windows.Storage;
 
-using FancyToys.Controls;
-using FancyToys.Logging;
-
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media;
+
+using FancyToys.Logging;
+using FancyToys.Utils;
+using FancyToys.Service.Teleport;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -30,12 +30,43 @@ namespace FancyToys.Views {
     /// </summary>
     public sealed partial class TeleportView: Page {
 
-        private ObservableCollection<ClipListItem> ClipList;
-        private Timer _timer;
-        private bool _allowSpanClip;
+        [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
+        private ObservableCollection<ClipItem> ClipList;
         private bool _allowClip;
+        private bool _allowSimilarWithFormer;
+        private readonly Messenger _teleportServer;
 
-        public bool AllowSimilarWithFormer { get; set; } = true;
+        private static readonly FontIcon _ConnectedIcon = new() {
+            Glyph = "\xF0B9",
+            FontSize = 18,
+            Foreground = new SolidColorBrush(Colors.LightGreen),
+        };
+        private static readonly FontIcon _DisconnectedIcon = new() {
+            Glyph = "\xF384",
+            FontSize = 18,
+            Foreground = new SolidColorBrush(Colors.Red),
+        };
+        private static readonly ProgressRing _ConnectingIcon = new() {
+            Width = 25,
+            Height = 25,
+            IsActive = true,
+        };
+
+        private string TeleportServerIP {
+            get => (string)ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerIP)] ?? string.Empty;
+            set {
+                _teleportServer.IP = value;
+                ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerIP)] = value;
+            }
+        }
+
+        private int TeleportServerPort {
+            get => (int)(ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerPort)] ?? 0);
+            set {
+                _teleportServer.Port = value;
+                ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerPort)] = value;
+            }
+        }
 
         public TeleportView() {
             /*
@@ -46,29 +77,53 @@ namespace FancyToys.Views {
              */
             InitializeComponent();
 
-            ClipList = new ObservableCollection<ClipListItem>();
+            _allowClip = true;
+            bool allowSpanClip = true;
+            ClipList = new ObservableCollection<ClipItem>();
+            TestConnectionStatusContainer.Child = _DisconnectedIcon;
 
-            _timer = new Timer {
+            _teleportServer = new Messenger() {
+                IP = TeleportServerIP,
+                Port = TeleportServerPort,
+            };
+
+            _teleportServer.OnServerConnected += () => {
+                TestConnectionStatusContainer.Child = _ConnectedIcon;
+            };
+            LoadClipboardHistory();
+
+            Timer timer = new() {
                 AutoReset = true,
                 Interval = 500,
             };
 
-            _timer.Elapsed += (o, s) => {
-                Debug.WriteLine("timer elapsed");
-                _allowSpanClip = true;
-                _timer.Stop();
+            timer.Elapsed += (_, _) => {
+                Dogger.Trace("timer elapsed");
+                allowSpanClip = true;
+                timer.Stop();
             };
-            _allowSpanClip = true;
-            LoadClipboardHistory();
 
-            Clipboard.ContentChanged += (s, e) => {
-                if (!_allowClip) return;
-                // TcpBridge client = new();
-                // SetContent(Clipboard.GetContent());
-                Debug.WriteLine("-------------Clipboard.ContentChanged------------------");
-                _timer.Start();
-                CreateContent(Clipboard.GetContent(), true);
-                _allowSpanClip = false;
+            Clipboard.ContentChanged += async (_, _) => {
+                if (!_allowClip || !allowSpanClip) return;
+
+                ClipItem former = ClipList[0];
+                ClipItem newItem = await CreateContent(Clipboard.GetContent());
+
+                // set clip content failed
+                if (newItem is null) {
+                    Dogger.Trace("invalid clip item");
+                    return;
+                }
+
+                // check whether this content is equal with former's.
+                if (!_allowSimilarWithFormer && former is not null && former.Equals(newItem)) {
+                    Dogger.Debug("equal with former");
+                    return;
+                }
+
+                timer.Start();
+                allowSpanClip = false;
+                ClipList.Insert(0, newItem);
             };
         }
 
@@ -76,58 +131,89 @@ namespace FancyToys.Views {
             ClipboardHistoryItemsResult list = await Clipboard.GetHistoryItemsAsync();
 
             foreach (ClipboardHistoryItem item in list.Items) {
-                CreateContent(item.Content);
+                ClipList.Add(await CreateContent(item.Content));
             }
         }
 
-        private async void CreateContent(DataPackageView package, bool userClip = false) {
-            ClipListItem newer = null;
+        private async Task<ClipItem> CreateContent(DataPackageView package) {
+            ClipItem newer = new() {
+                TeleportServer = _teleportServer
+            };
 
-            if (userClip) {
-                // if (!_allowSpanClip) { return; }
-
-                // ClipListItem former = ClipList.Count > 0 ? ClipList[0] : null;
-                //
-                // // check if former-text is same as new-text
-                // if (!AllowSimilarWithFormer
-                //     && former is not null
-                //     && former.ContentType == ClipListItem.ClipType.Text
-                //     && (newer = new ClipListItem(package)).ContentType == ClipListItem.ClipType.Text) {
-                //     return;
-                // }
-                // newer ??= new ClipListItem(package);
-                newer = new ClipListItem(package);
-                newer.OnDelete += (item) => {
-                    ClipList.Remove(item);
-                };
-                ClipList.Insert(0, newer);
-            } else {
-                newer = new ClipListItem(package);
-                newer.OnDelete += (item) => {
-                    ClipList.Remove(item);
-                };
-                ClipList.Add(newer);
+            if (!await newer.SetContent(package)) {
+                return null;
             }
 
+            newer.OnDelete += (item) => {
+                ClipList.Remove(item);
+            };
 
+            return newer;
         }
+
+        // CommandBar's Button events
+        // --------------------------------------------------------------------------------------------
+
+        private void PinButton_OnClick(object sender, RoutedEventArgs e) {
+            bool allPined = ClipListView.SelectedItems.Cast<ClipItem>().Aggregate(true, (current, selectedItem) => current & selectedItem.Pinned);
+
+            foreach (ClipItem selectedItem in ClipListView.SelectedItems) {
+                selectedItem.Pinned = !allPined;
+            }
+        }
+
+        private void SendButton_OnClick(object sender, RoutedEventArgs e) {
+            foreach (ClipItem selectedItem in ClipListView.SelectedItems) {
+                selectedItem.SendClipContent();
+            }
+        }
+
+        private void CopyButton_OnClick(object sender, RoutedEventArgs e) {
+            if (ClipListView.SelectedItems.First() is not ClipItem first) {
+                return;
+            }
+            first.CopyToClipboard();
+        }
+
+        private void DeleteButton_OnClick(object sender, RoutedEventArgs e) {
+            List<ClipItem> selectedItems = ClipListView.SelectedItems.Cast<ClipItem>().ToList();
+            selectedItems.ForEach(item => ClipList.Remove(item));
+        }
+
+        // CommandBar's secondary switch button events
+        // --------------------------------------------------------------------------------------------
 
         private void ListenSwitch_OnToggled(object sender, RoutedEventArgs e) {
-            if (sender is not ToggleSwitch ts) return;
-            _allowClip = ts.IsOn;
+            if (sender is not AppBarToggleButton ts) return;
+            _allowClip = ts.IsChecked ?? false;
+        }
+
+        private void CheckSimilarSwitch_OnToggled(object sender, RoutedEventArgs e) {
+            if (sender is not AppBarToggleButton tb) return;
+            _allowSimilarWithFormer = tb.IsChecked ?? false;
         }
 
         private void ClearButton_OnClick(object sender, RoutedEventArgs e) {
-            List<ClipListItem> removeList = ClipList.Where(clipListItem => !clipListItem.Pinned).ToList();
+            List<ClipItem> removeList = ClipList.Where(clipListItem => !clipListItem.Pinned).ToList();
             removeList.ForEach((item => ClipList.Remove(item)));
         }
 
-        private void UnderLineButton_OnClick(object sender, RoutedEventArgs e) {
-            if (sender is not ToggleButton tb) return;
+        // TeleportServer settings' events
+        // --------------------------------------------------------------------------------------------
 
-            foreach (ClipListItem item in ClipList) {
-                item.TextDecoration = tb.IsChecked == true ? TextDecorations.Underline : TextDecorations.None;
-            }
+        private async void TestConnectionButton_OnClick(object sender, RoutedEventArgs e) {
+            TestConnectionStatusContainer.Child = _ConnectingIcon;
+
+            bool connected = await _teleportServer.TestConnection();
+            TestConnectionStatusContainer.Child = connected ? _ConnectedIcon : _DisconnectedIcon;
+        }
+
+        private void IPAddressTextBox_OnTextChanged(object sender, TextChangedEventArgs e) {
+            TestConnectionStatusContainer.Child = _DisconnectedIcon;
+        }
+
+        private void PortNumberBox_OnValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args) {
+            TestConnectionStatusContainer.Child = _DisconnectedIcon;
         }
     }
 

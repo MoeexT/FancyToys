@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Microsoft.Windows.AppLifecycle;
 using AppInstance = Microsoft.Windows.AppLifecycle.AppInstance;
+using Microsoft.UI.Xaml.Controls;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -20,6 +21,9 @@ namespace FancyToys {
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
     public partial class App: Application {
+
+        public static XamlRoot MainXamlRoot { get; private set; }
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -45,11 +49,22 @@ namespace FancyToys {
             WindowHandle = windowNative.WindowHandle;
             m_window.Title = "FancyToys";
             m_window.Activate();
+            MainXamlRoot = m_window.Content.XamlRoot;
+            if (m_window.Content is FrameworkElement fe) {
+                //fe.Loaded += (s, e) => Login();
+            }
 
             // The Window object doesn't have Width and Height properties in WInUI 3 Desktop yet.
             // To set the Width and Height, you can use the Win32 API SetWindowPos.
             // Note, you should apply the DPI scale factor if you are thinking of dpi instead of pixels.
             SetWindowSize(WindowHandle, 900, 600);
+        }
+
+        protected async void Login() {
+            var messageDialog = new ContentDialog {
+                XamlRoot = m_window.Content.XamlRoot
+            };
+            await messageDialog.ShowAsync();
         }
 
         private static void SetWindowSize(IntPtr hwnd, int width, int height) {

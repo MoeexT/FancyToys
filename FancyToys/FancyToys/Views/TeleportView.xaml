@@ -11,35 +11,82 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="330"></ColumnDefinition>
+            <ColumnDefinition Width="380"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="125" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0">
-                <TextBlock x:Name="ClipTitle" Text="ClipText" TextWrapping="Wrap" />
-                <Button Content="Clear" Click="ClearButton_OnClick"></Button>
-                <ToggleButton Content="Underline" Click="UnderLineButton_OnClick"></ToggleButton>
-                <ToggleSwitch x:Name="ListenSwitch" Toggled="ListenSwitch_OnToggled"></ToggleSwitch>
-            </StackPanel>
+            <Grid Grid.Row="0">
+                <CommandBar IsOpen="False" DefaultLabelPosition="Right">
+                    <AppBarButton Icon="Pin" Label="Pin" Click="PinButton_OnClick" />
+                    <AppBarButton Icon="Send" Label="Send" Click="SendButton_OnClick" />
+                    <AppBarButton Icon="Copy" Label="Copy" Click="CopyButton_OnClick" />
+                    <AppBarButton Icon="Delete" Label="Delete" Click="DeleteButton_OnClick" />
+                    <CommandBar.SecondaryCommands>
+                        <AppBarToggleButton Label="Listen" IsChecked="{x:Bind _allowClip}" Click="ListenSwitch_OnToggled" />
+                        <AppBarToggleButton Label="AllowSimilar" IsChecked="{x:Bind _allowSimilarWithFormer}" Click="CheckSimilarSwitch_OnToggled" />
+                        <AppBarButton Label="Clear" Click="ClearButton_OnClick">
+                            <AppBarButton.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="L" />
+                            </AppBarButton.KeyboardAccelerators>
+                        </AppBarButton>
+                    </CommandBar.SecondaryCommands>
+                </CommandBar>
+            </Grid>
 
             <ListView Padding="2"
-                Grid.Row="1"
+                      Grid.Row="1"
                       x:Name="ClipListView"
                       CanDragItems="True"
                       SelectionMode="Extended"
                       ItemsSource="{x:Bind ClipList, Mode=TwoWay}">
+                 <ListView.ItemContainerStyle>
+                 <Style TargetType="ListViewItem">
+                         <!--~1~ <Setter Property="Height" Value="80" /> @1@-->
+                         <Setter Property="Margin" Value="1" />
+                         <Setter Property="Padding" Value="0" />
+                         <!--~1~ <Setter Property="Background" Value="#343434" /> @1@-->
+                 <Setter Property="HorizontalAlignment" Value="Stretch" />
+                 <Setter Property="VerticalAlignment" Value="Stretch" />
+                 </Style>
+                 </ListView.ItemContainerStyle>
+                <ListView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition />
+                    </TransitionCollection>
+                </ListView.ItemContainerTransitions>
+
+            </ListView>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <StackPanel Margin="0 5 0 0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox x:Name="IPAddressTextBox" Header="IP(v4)" Width="155" TextChanged="IPAddressTextBox_OnTextChanged" PlaceholderText="233.233.233.233" Text="{x:Bind TeleportServerIP, Mode=TwoWay}" />
+                        <NumberBox x:Name="PortNumberBox" Header="Port" FontSize="15" Margin="5 0 5 0" ValueChanged="PortNumberBox_OnValueChanged" PlaceholderText="2378" Value="{x:Bind TeleportServerPort, Mode=TwoWay}" />
+                        <Button Content="Check" VerticalAlignment="Bottom" Width="65" Click="TestConnectionButton_OnClick" />
+                        <Border x:Name="TestConnectionStatusContainer" VerticalAlignment="Bottom" Margin="10 0 10 5" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+            <ListView Grid.Row="1" AllowDrop="True" 
+                      CanDragItems="True"
+                      CanReorderItems="True"
+                      >
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
-                        <!-- <Setter Property="Height" Value="80" /> -->
                         <Setter Property="Margin" Value="0,0,12,0" />
                         <Setter Property="Padding" Value="0,-7,5,3" />
-                        <!-- <Setter Property="Background" Value="#343434" /> -->
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
                         <Setter Property="VerticalAlignment" Value="Stretch" />
                     </Style>
@@ -52,8 +99,5 @@
 
             </ListView>
         </Grid>
-        <Grid Grid.Column="1"></Grid>
-
-
     </Grid>
 </Page>

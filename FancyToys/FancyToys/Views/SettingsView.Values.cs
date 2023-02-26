@@ -5,15 +5,15 @@ using FancyToys.Utils;
 
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml;
-
+using NAudio.CoreAudioApi;
 
 namespace FancyToys.Views {
 
     public partial class SettingsView {
+
         public double OpacitySliderValue {
             get => (double)(LocalSettings.Values[nameof(OpacitySliderValue)] ?? 0.6);
             set {
-                Dogger.Info($"OpacitySliderValue: {value}");
                 Notifier.Notify(Notifier.Keys.ServerPanelOpacity, value);
                 LocalSettings.Values[nameof(OpacitySliderValue)] = value;
                 OnSettingChanged?.Invoke(LocalSettings, nameof(OpacitySliderValue));

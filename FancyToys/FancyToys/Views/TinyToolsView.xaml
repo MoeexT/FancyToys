@@ -1,0 +1,88 @@
+﻿<Page
+    x:Class="FancyToys.Views.TinyToolsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FancyToys.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:animations="using:CommunityToolkit.WinUI.UI.Animations"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <DataTemplate x:Key="NavLinkItemTemplate" x:DataType="local:NavLink">
+            <StackPanel Orientation="Horizontal" Margin="2,0,0,0" AutomationProperties.Name="{x:Bind Label}">
+                <FontIcon Glyph="{x:Bind Glyph, Mode=OneWay}" />
+                <TextBlock Text="{x:Bind Label}" Margin="24,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
+    </Page.Resources>
+
+    <Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Auto">
+            <SplitView x:Name="TinyToolsSplitView"
+                       IsPaneOpen="True"
+                       OpenPaneLength="200"
+                       CompactPaneLength="60"
+                       DisplayMode="CompactInline">
+                <SplitView.Pane>
+                    <Grid Margin="10 26 0 0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="TinyTools"
+                                   FontSize="26"
+                                   TextAlignment="Left"
+                                   Margin="10 0 0 10"
+                                   DoubleTapped="PanelHeader_OnDoubleTapped" />
+                        <ListView Grid.Row="1"
+                                  SelectionMode="Single"
+                                  IsItemClickEnabled="True"
+                                  VerticalAlignment="Stretch"
+                                  ItemClick="ListViewBase_OnItemClick"
+                                  ItemsSource="{x:Bind NavLinks}"
+                                  ItemTemplate="{StaticResource NavLinkItemTemplate}" SelectedIndex="0" />
+                    </Grid>
+                </SplitView.Pane>
+                <Border Margin="30">
+                    <StackPanel>
+                        <animations:Implicit.ShowAnimations>
+                            <animations:OpacityAnimation Duration="0:0:1" From="0" To="1" />
+                        </animations:Implicit.ShowAnimations>
+                        <TextBlock x:Name="DefaultView" FontSize="36" Text="Expect nice things." Visibility="Collapsed" />
+                        <StackPanel x:Name="VolumeLockerView">
+                            <TextBlock Text="System Volume Locker" FontSize="26" />
+                            <StackPanel Orientation="Horizontal" Margin="0 20 0 0">
+                                <FontIcon x:Name="VolumeIcon" Glyph="&#xE993;" Margin="0 0 10 0" />
+                                <Slider x:Name="VolumeSlider"
+                                        Width="200"
+                                        Minimum="0"
+                                        Maximum="100"
+                                        StepFrequency="1"
+                                        TickFrequency="10"
+                                        TickPlacement="Outside"
+                                        Value="{x:Bind SystemVolumeMax, Mode=TwoWay}" />
+                                <TextBlock
+                                    Margin="20 0"
+                                    VerticalAlignment="Center"
+                                    FontSize="20"
+                                    Text="{x:Bind VolumeSlider.Value, Mode=OneWay}" />
+                                <ToggleButton x:Name="SystemVolumeLockButton"
+                                              Padding="6"
+                                              Margin="0 0 12 0"
+                                              FontFamily="Segoe MDL2 Assets"
+                                              FontSize="16"
+                                              Content="&#xE72E;"
+                                              IsChecked="{x:Bind SystemVolumeLocked, Mode=TwoWay}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </SplitView>
+        </ScrollViewer>
+    </Grid>
+</Page>

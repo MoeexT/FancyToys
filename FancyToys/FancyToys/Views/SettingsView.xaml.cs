@@ -1,13 +1,16 @@
-﻿using Microsoft.UI;
+﻿using System;
+using System.Collections.Generic;
+
+using Windows.Storage;
+
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
-using System;
-using System.Collections.Generic;
-
-using Windows.Storage;
+using NAudio.CoreAudioApi;
 
 using FancyToys.Logging;
 
@@ -52,7 +55,12 @@ namespace FancyToys.Views {
         }
 
         private void InitializeDefaultSettings() {
-            LogLevel = LogLevel.Trace;
+            LogLevel = LogLevel;
+            StdLevel = StdLevel;
+            CurrentTheme = CurrentTheme;
+            MonitorFontColor = MonitorFontColor;
+            OpacitySliderValue = OpacitySliderValue;
+
             switch (CurrentTheme) {
                 case ElementTheme.Dark:
                     DarkThemeButton.IsChecked = true;
@@ -60,6 +68,7 @@ namespace FancyToys.Views {
                 case ElementTheme.Light:
                     LightThemeButton.IsChecked = true;
                     break;
+                case ElementTheme.Default:
                 default:
                     SystemThemeButton.IsChecked = true;
                     break;
@@ -89,7 +98,7 @@ namespace FancyToys.Views {
         }
 
         private void StdLevelChanged(object sender, SelectionChangedEventArgs e) {
-            if (sender != StdLevelComboBox) return;
+            if (!ReferenceEquals(sender, StdLevelComboBox)) return;
             ComboBoxItem item = (ComboBoxItem)StdLevelComboBox.SelectedItem;
             TextBlock header = (TextBlock)StdLevelComboBox.Header;
             Brush originHeaderForeground = header!.Foreground;
