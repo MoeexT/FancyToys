@@ -55,7 +55,11 @@ namespace FancyToys.Views {
         }
 
         private void InitializeDefaultSettings() {
-            InitializeValues();
+            LogLevel = LogLevel;
+            StdLevel = StdLevel;
+            CurrentTheme = CurrentTheme;
+            MonitorFontColor = MonitorFontColor;
+            OpacitySliderValue = OpacitySliderValue;
 
             switch (CurrentTheme) {
                 case ElementTheme.Dark:

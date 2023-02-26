@@ -86,10 +86,14 @@ namespace FancyToys {
             Dogger.Info("FancyToys started.");
 
             CurrentWindow = this;
-            
+
             // no UIElement is set for titlebar, fallback titlebar is created
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(AppTitleBar);  // this line is optional as by it is null by default
+            SetTitleBar(AppTitleBar); // this line is optional as by it is null by default
+
+            // _ = new ServerView();
+            _ = new TinyToolsView();
+            _ = new SettingsView();
         }
 
         private void NavViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
