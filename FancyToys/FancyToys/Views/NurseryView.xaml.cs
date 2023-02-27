@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.Linq;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -35,12 +35,18 @@ namespace FancyToys.Views {
         private ObservableCollection<ProcessStatistic> ProcessInfoList { get; }
 
         private readonly InformationManager _informationManager;
+        private readonly ApplicationDataContainer _settingContainer;
+
+        public static NurseryView Instance { get; private set; }
 
         public NurseryView() {
             InitializeComponent();
             NurseryList = new ObservableCollection<NurseryItem>();
             ProcessInfoList = new ObservableCollection<ProcessStatistic>();
             _informationManager = new InformationManager(this);
+            _settingContainer = ApplicationData.Current.LocalSettings.CreateContainer(nameof(TeleportView), ApplicationDataCreateDisposition.Always);
+            Instance = this;
+            OnLoaded();
         }
 
         private async void DropAreaDrop(object sender, DragEventArgs e) {
@@ -79,7 +85,7 @@ namespace FancyToys.Views {
                 ViewMode = PickerViewMode.Thumbnail,
                 SuggestedStartLocation = PickerLocationId.HomeGroup
             };
-            
+
             InitializeWithWindow.Initialize(picker, hwnd);
             picker.FileTypeFilter.Add(".exe");
             StorageFile file = await picker.PickSingleFileAsync();
@@ -99,10 +105,7 @@ namespace FancyToys.Views {
         }
 
         private async void RemoveAllFlyoutItemClick(object sender, RoutedEventArgs e) {
-            foreach (NurseryItem nurseryItem in NurseryList) {
-                await nurseryItem.Delete();
-            }
-            NurseryList.Clear();
+            NurseryList.ToList().ForEach(async (nurseryItem) => await nurseryItem.Delete());
         }
 
         private async void SeizeProcessFlyoutItemClick(object sender, RoutedEventArgs e) {
@@ -117,18 +120,22 @@ namespace FancyToys.Views {
 
             string content = inputDialog.inputContent.Trim();
 
+            MessageDialog dialog;
+
             if (!int.TryParse(content, out int pid)) {
+                dialog = new MessageDialog("Nursery", "Invalid PID", "Ok", MessageDialog.MessageLevel.Notice) {
+                    XamlRoot = XamlRoot,
+                };
+                await dialog.ShowAsync();
                 return;
             }
 
-            Process newProcess = Process.GetProcessById(pid);
+            if (AddProcess(pid)) return;
 
-            MessageDialog dialog = new("Nursery", newProcess.ProcessName, "Ok", MessageDialog.MessageLevel.Notice) {
+            dialog = new MessageDialog("Nursery", "Invalid PID, the process doesn't exist.", "Ok", MessageDialog.MessageLevel.Notice) {
                 XamlRoot = XamlRoot,
             };
-
             await dialog.ShowAsync();
-            AddProcess(newProcess);
         }
 
         private void HelpFlyoutItemClick(object sender, RoutedEventArgs e) { DropFileTeachingTip.IsOpen = true; }

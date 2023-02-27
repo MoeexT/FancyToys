@@ -1,14 +1,15 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+using Microsoft.UI.Xaml;
+
 using Windows.ApplicationModel.DataTransfer;
+
+using MemoryPack;
 
 using FancyToys.Annotations;
 using FancyToys.Controls.Dialogs;
@@ -21,7 +22,29 @@ using FancyToys.Logging;
 
 namespace FancyToys.Service.Nursery {
 
-    public sealed partial class NurseryItem: UserControl, INotifyPropertyChanged {
+    [MemoryPackable]
+    // ReSharper disable once PartialTypeWithSinglePart
+    public partial struct NurseryItemStruct {
+        public int NurseryId;
+        public string Alias;
+        public string FilePath;
+        public string Arguments;
+        public bool RedirectIOE;
+        public bool IsAlive;
+
+        public override string ToString() {
+            return $"{{" +
+                $"NurseryId: {NurseryId}, " +
+                $"Alias: {Alias}, " +
+                $"FilePath: {FilePath} ," +
+                $"Arguments: {Arguments}, " +
+                $"RedirectIOE: {RedirectIOE}, " +
+                $"IsAlive: {IsAlive}" +
+                $"}}";
+        }
+    }
+
+    public sealed partial class NurseryItem: INotifyPropertyChanged {
 
         public delegate void ProcessInfoHandler(NurseryItem ps);
 
@@ -29,78 +52,84 @@ namespace FancyToys.Service.Nursery {
         public event ProcessInfoHandler OnProcessLaunched;
 
         // public event ProcessInfoHandler OnProcessAdd;
-        // public event ProcessInfoHandler OnProcessRemoved;
+        public event ProcessInfoHandler OnItemDeleted;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private Process NurseryProcess { get; set; }
-        public readonly int NurseryId;
-        public string FilePath { get; private set; }
-        private string Alias { get; set; }
+        public int NurseryId { get; private set; }
+        public string Alias { get; private set; }
+        public string FilePath { get; set; }
+        public string Arguments { get; set; }
+        public bool RedirectIOE { get; private set; }
 
         public bool IsAlive {
             get => _isAlive;
             private set {
+                if (value) {
+                    Launch();
+                } else {
+                    Stop();
+                }
                 _isAlive = value;
-
-                DispatcherQueue.TryEnqueue(() => {
-                    OnPropertyChanged();
-                });
             }
         }
 
-        public bool AutoRestart { get; private set; }
-        public bool RedirectIOE { get; private set; }
-        private PerformanceCounter CpuCounter { get; set; }
-        private PerformanceCounter MemCounter { get; set; }
-        public string SwitchOnContent { get => $"{Alias} is running"; }
-        public string SwitchOffContent { get => $"{Alias} is stopped"; }
+        public string SwitchContent => $"{Alias} is {(IsAlive ? "running" : "stopped")}";
 
-        private byte _restartCount;
-        private readonly object _launchLock;
         private bool _isAlive;
-        private static int _idCursor;
+        private readonly bool _dissociative;
+        private readonly object _launchLock;
 
-        private NurseryItem(Process nurseryProcess) {
-            _launchLock = null;
-            NurseryId = _idCursor++;
-            NurseryProcess = nurseryProcess;
-            AutoRestart = false;
+        private Process _nurseryProcess;
+        private PerformanceCounter _cpuCounter;
+        private PerformanceCounter _memCounter;
+
+        public NurseryItem(Process nurseryProcess) {
+            _isAlive = true;
+            _dissociative = true;
+            _launchLock = new object();
+            NurseryId = nurseryProcess.Id;
+            _nurseryProcess = nurseryProcess;
             Alias = nurseryProcess.ProcessName;
-            NurseryProcess.Exited += OnProcessOnExited;
-            NurseryProcess.EnableRaisingEvents = true;
-            CpuCounter = new PerformanceCounter("Process", "% Processor Time", NurseryProcess.ProcessName);
-            MemCounter = new PerformanceCounter("Process", "Working Set - Private", NurseryProcess.ProcessName);
+            _nurseryProcess.Exited += OnProcessOnExited;
+            _nurseryProcess.EnableRaisingEvents = true;
+            _cpuCounter = new PerformanceCounter("Process", "% Processor Time", _nurseryProcess.ProcessName);
+            _memCounter = new PerformanceCounter("Process", "Working Set - Private", _nurseryProcess.ProcessName);
 
             InitializeComponent();
         }
 
-        private NurseryItem(string pathName) {
-            NurseryId = _idCursor++;
+        public NurseryItem(string pathName, string arguments) {
             FilePath = pathName;
+            Arguments = arguments;
             Alias = Path.GetFileName(FilePath);
             _launchLock = new object();
-            InitializeProcess(FilePath);
+            InitializeProcess();
 
             InitializeComponent();
         }
 
-        public static bool WithPath(string pathName, out NurseryItem item) {
-            if (!File.Exists(pathName)) {
-                Dogger.Error("File not exist.");
-                item = null;
-                return false;
-            }
-
-            item = new NurseryItem(pathName);
-            return true;
+        public NurseryItemStruct GetStruct() {
+            return new NurseryItemStruct() {
+                NurseryId = NurseryId,
+                Alias = Alias,
+                FilePath = FilePath,
+                Arguments = Arguments,
+                RedirectIOE = RedirectIOE,
+                IsAlive = IsAlive,
+            };
         }
 
-        public static bool WithProcess(Process process, out NurseryItem item) {
-            if (process is null) {
-                Dogger.Error("Null or dead process.");
-                item = null;
-                return false;
+        public ProcessStatistic Statistic() {
+            try {
+                return new ProcessStatistic(NurseryId,
+                    _nurseryProcess.Id,
+                    _nurseryProcess.ProcessName,
+                    _cpuCounter.NextValue(),
+                    _memCounter.NextValue());
+            } catch (Exception e) {
+                Dogger.Error(e.ToString());
+                return new ProcessStatistic(NurseryId, 0, Alias, 0, 0);
             }
 
             item = new NurseryItem(process);
@@ -112,63 +141,62 @@ namespace FancyToys.Service.Nursery {
         /// Launch the process
         /// </summary>
         /// <returns></returns>
-        private bool Launch() {
+        private void Launch() {
             Dogger.Trace($"Launching {Alias}");
-
-            // caught process
-            if (_launchLock is null) {
-                Dogger.Error($"Caught process ${Alias} cannot be launched.");
-                return false;
-            }
-
-            // TODO _launchLock 锁NurseryProcess
 
             // process is already running
             if (IsAlive) {
                 Dogger.Error($"Process {Alias} is running.");
-                return false;
+                return;
             }
 
+            // caught process
+            if (_dissociative) {
+                if (string.IsNullOrEmpty(FilePath)) {
+                    Dogger.Error($"Caught process {Alias} cannot be launched.");
+                    return;
+                }
+                InitializeProcess();
+            }
 
             // if this process had been redirected std-ioe, cancel first
             if (RedirectIOE) {
-                NurseryProcess.CancelOutputRead();
-                NurseryProcess.CancelErrorRead();
+                try {
+                    _nurseryProcess.CancelOutputRead();
+                    _nurseryProcess.CancelErrorRead();
+                } catch (Exception e) {
+                    Dogger.Error(e.Message);
+                }
                 RedirectIOE = false;
             }
 
             lock (_launchLock) {
-                bool launchSucceed = NurseryProcess.Start();
-                _isAlive = true;
+                bool launchSucceed = _nurseryProcess.Start();
 
                 if (!launchSucceed) { // launch failed
                     Dogger.Error($"Process launch failed: {Alias}");
-                    return false;
+                    return;
                 }
+                _isAlive = true;
             }
 
             // TODO InvalidOperationException: process has exited.
-            if (!NurseryProcess.HasExited) {
-                CpuCounter = new PerformanceCounter("Process", "% Processor Time", NurseryProcess.ProcessName);
-                MemCounter = new PerformanceCounter("Process", "Working Set - Private", NurseryProcess.ProcessName);
-                Alias = NurseryProcess.ProcessName;
+            if (!_nurseryProcess.HasExited) {
+                NurseryId = _nurseryProcess.Id;
+                Alias = _nurseryProcess.ProcessName;
+                _cpuCounter = new PerformanceCounter("Process", "% Processor Time", _nurseryProcess.ProcessName);
+                _memCounter = new PerformanceCounter("Process", "Working Set - Private", _nurseryProcess.ProcessName);
                 OnProcessLaunched?.Invoke(this);
-                Dogger.Info($"Process {NurseryProcess.ProcessName}[{NurseryProcess.Id}] launched successfully.");
+                Dogger.Info($"Process {_nurseryProcess.ProcessName}[{_nurseryProcess.Id}] launched successfully.");
             }
 
             // TODO System.InvalidOperationException:“An async read operation has already been started on the stream.”
-            _restartCount = 0;
 
-            if (RedirectIOE) {
-                Dogger.Info($"Process has been redirected output stream.");
-                return true;
+            if (!RedirectIOE) {
+                _nurseryProcess.BeginOutputReadLine();
+                _nurseryProcess.BeginErrorReadLine();
+                RedirectIOE = true;
             }
-
-            NurseryProcess.BeginOutputReadLine();
-            NurseryProcess.BeginErrorReadLine();
-            RedirectIOE = true;
-
-            return true;
         }
 
         /// <summary>
@@ -176,7 +204,7 @@ namespace FancyToys.Service.Nursery {
         /// </summary>
         public void Stop() {
             if (IsAlive) {
-                NurseryProcess.Kill();
+                _nurseryProcess.Kill();
                 Dogger.Info("Process killed.");
             } else {
                 Dogger.Warn($"Process {Alias}({NurseryId}) already exited.");
@@ -196,6 +224,8 @@ namespace FancyToys.Service.Nursery {
 
             // dispose the process instance
             Dispose();
+            OnItemDeleted?.Invoke(this);
+
             return true;
         }
 
@@ -204,66 +234,40 @@ namespace FancyToys.Service.Nursery {
         /// </summary>
         private void Dispose() {
             if (IsAlive) {
-                NurseryProcess.Kill();
+                _nurseryProcess.Kill();
             }
-            NurseryProcess.Dispose();
+            _nurseryProcess.Dispose();
             Dogger.Trace($"Process disposed: {NurseryId}, {Alias}");
         }
 
         /// <summary>
         /// add a original process and init its start info or something else
         /// </summary>
-        /// <param name="pathName">file's full name with path</param>
-        private void InitializeProcess(string pathName) {
-            NurseryProcess = new Process();
-            NurseryProcess.EnableRaisingEvents = true;
-            NurseryProcess.StartInfo.FileName = pathName;
-            NurseryProcess.StartInfo.CreateNoWindow = true;
-            NurseryProcess.StartInfo.UseShellExecute = false;
-            NurseryProcess.StartInfo.RedirectStandardError = true;
-            NurseryProcess.StartInfo.RedirectStandardOutput = true;
-            NurseryProcess.StartInfo.WorkingDirectory = Path.GetDirectoryName(pathName) ?? string.Empty;
-            NurseryProcess.Exited += OnProcessOnExited;
-
-            NurseryProcess.OutputDataReceived += (s, e) => {
-                if (!string.IsNullOrEmpty(e.Data)) Dogger.StdOutput(((Process)s).Id, e.Data);
-            };
-
-            NurseryProcess.ErrorDataReceived += (s, e) => {
-                if (!string.IsNullOrEmpty(e.Data)) Dogger.StdError(((Process)s).Id, e.Data);
-            };
-            Dogger.Trace($"Process created with file: {pathName}");
-        }
-
-        public ProcessStatistic Statistic() {
-            try {
-                return new ProcessStatistic(NurseryId,
-                    NurseryProcess.Id,
-                    NurseryProcess.ProcessName,
-                    CpuCounter.NextValue(),
-                    MemCounter.NextValue());
-            } catch (Exception e) {
-                Dogger.Error(e.ToString());
-                return new ProcessStatistic(NurseryId, 0, Alias, 0, 0);
-            }
+        private void InitializeProcess() {
+            _nurseryProcess = new Process();
+            _nurseryProcess.EnableRaisingEvents = true;
+            _nurseryProcess.StartInfo.FileName = FilePath;
+            _nurseryProcess.StartInfo.CreateNoWindow = true;
+            _nurseryProcess.StartInfo.UseShellExecute = false;
+            _nurseryProcess.StartInfo.RedirectStandardError = true;
+            _nurseryProcess.StartInfo.RedirectStandardOutput = true;
+            _nurseryProcess.StartInfo.WorkingDirectory = Path.GetDirectoryName(FilePath) ?? string.Empty;
+            _nurseryProcess.Exited += OnProcessOnExited;
+            _nurseryProcess.ErrorDataReceived += (s, e) => Dogger.StdError(((Process)s).Id, e.Data);
+            _nurseryProcess.OutputDataReceived += (s, e) => Dogger.StdOutput(((Process)s).Id, e.Data);
+            Dogger.Trace($"Process created with file: {FilePath}");
         }
 
         private async void ArgsFlyoutItem_OnClick(object sender, RoutedEventArgs e) {
-            if (sender is not MenuFlyoutItem ai) {
-                Dogger.Error("args-button is null");
-                return;
-            }
-
-            int pid = (int)ai.Tag;
-
-            InputDialog inputDialog = new("Nursery", "输入参数", NurseryProcess.StartInfo.Arguments) {
+            InputDialog inputDialog = new("Nursery", "输入参数", _nurseryProcess.StartInfo.Arguments) {
                 XamlRoot = XamlRoot,
             };
             // Value does not fall within the expected range
             await inputDialog.ShowAsync();
 
             if (inputDialog.isSaved) {
-                NurseryProcess.StartInfo.Arguments = inputDialog.inputContent;
+                Arguments = inputDialog.inputContent;
+                _nurseryProcess.StartInfo.Arguments = inputDialog.inputContent;
             }
         }
 
@@ -278,41 +282,17 @@ namespace FancyToys.Service.Nursery {
         }
 
         private void OnProcessOnExited(object sender, EventArgs _) {
+            lock (_launchLock) {
+                _isAlive = false;
+                DispatcherQueue.TryEnqueue(() => OnPropertyChanged());
+            }
+
+            OnProcessExited?.Invoke(this);
             Dogger.Trace("Process exited." + Alias);
-
-            if (_launchLock is null) {
-                return;
-            }
-
-            if (AutoRestart && _restartCount < 3) {
-                _restartCount++;
-
-                Dogger.Info(NurseryProcess.Start()
-                    ? $"Restart {NurseryProcess.ProcessName}({NurseryId}) successfully."
-                    : $"Restart {NurseryProcess.ProcessName}({NurseryId}) failed.");
-            } else {
-                lock (_launchLock) {
-                    IsAlive = false;
-                }
-                OnProcessExited?.Invoke(this);
-                Dogger.Info($"Process {Alias} exited.{(_restartCount > 0 ? $" (Restarted {_restartCount} times)" : "")}");
-            }
-        }
-
-        private void NurseryToggleSwitch_OnToggled(object sender, RoutedEventArgs e) {
-            if (sender is not ToggleSwitch ts) {
-                return;
-            }
-
-            if (ts.IsOn) {
-                ts.IsOn = Launch();
-            } else {
-                Stop();
-            }
         }
 
         public override string ToString() =>
-            $"<ProcessInfo>{{Id:{NurseryId}, IsAlive:{IsAlive}, AutoRestart:{AutoRestart}, Alias:{Alias}}}";
+            $"<ProcessInfo>{{Id: {NurseryId}, IsAlive: {IsAlive}, Alias: {Alias}}}";
 
         [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged([CallerMemberName] string propertyName = null) {
