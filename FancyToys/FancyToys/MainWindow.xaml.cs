@@ -1,26 +1,23 @@
-﻿using FancyToys.Views;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Media;
+
+using Windows.UI;
+
+using WinRT.Interop;
 
 using NLog.Config;
 using NLog.Targets;
 
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage.Streams;
-using Windows.UI;
-
+using FancyToys.Views;
 using FancyToys.Controls;
 using FancyToys.Logging;
-using FancyToys.Utils;
-
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -42,18 +39,18 @@ namespace FancyToys {
         public MainWindow() {
             Categories = new ObservableCollection<CategoryBase>() {
                 new Category() {
-                    Content = "Teleport",
-                    Name = "TeleportView",
-                    Glyph = "\uE95A",
-                    Tooltip = "Clipboard manager",
-                    Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0, 0x7b, 0xfe))
-                },
-                new Category() {
                     Content = "Nursery",
                     Name = "NurseryView",
                     Glyph = "\uE9F5",
                     Tooltip = "Process manager",
                     Foreground = new SolidColorBrush(Colors.Silver),
+                },
+                new Category() {
+                    Content = "Teleport",
+                    Name = "TeleportView",
+                    Glyph = "\uE95A",
+                    Tooltip = "Clipboard manager",
+                    Foreground = new SolidColorBrush(Color.FromArgb(0xff, 0, 0x7b, 0xfe))
                 },
                 new Category() {
                     Content = "TinyTools",
@@ -70,7 +67,7 @@ namespace FancyToys {
                     Foreground = new SolidColorBrush(Colors.LightGreen),
                 },
             };
-            this.InitializeComponent();
+            InitializeComponent();
             NavView.SelectedItem = Categories.First();
 
             LoggingConfiguration config = new();
@@ -94,6 +91,9 @@ namespace FancyToys {
             // _ = new ServerView();
             _ = new TinyToolsView();
             _ = new SettingsView();
+
+            AppWindow appWindow = GetAppWindowForCurrentWindow();
+            appWindow.Closing += OnAppClosing;
         }
 
         private void NavViewSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
@@ -104,6 +104,16 @@ namespace FancyToys {
                 Type pageType = Type.GetType($"FancyToys.Views.{selectedItem.Name}");
                 ContentFrame.Navigate(pageType);
             }
+        }
+
+        private static void OnAppClosing(AppWindow window, AppWindowClosingEventArgs e) {
+            NurseryView.Instance.OnClosing();
+        }
+
+        private AppWindow GetAppWindowForCurrentWindow() {
+            IntPtr hWnd = WindowNative.GetWindowHandle(this);
+            WindowId myWndId = Win32Interop.GetWindowIdFromWindow(hWnd);
+            return AppWindow.GetFromWindowId(myWndId);
         }
 
     }

@@ -101,7 +101,7 @@
                           >
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
-                            <!-- <Setter Property="Height" Value="32" /> -->
+                             <Setter Property="Height" Value="50" /> 
                             <!-- <Setter Property="Padding" Value="10,0,0,0" /> -->
                         </Style>
                     </ListView.ItemContainerStyle>

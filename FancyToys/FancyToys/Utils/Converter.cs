@@ -25,7 +25,7 @@ namespace FancyToys.Utils {
                 case ConvertMethod.Marshal:
                     return getBytes(o);
                 default:
-                    try { return getBytes(o); } catch (Exception e) {
+                    try { return getBytes(o); } catch (Exception) {
                         return Consts.Encoding.GetBytes(JsonConvert.SerializeObject(o));
                     }
             }
@@ -40,7 +40,7 @@ namespace FancyToys.Utils {
                         MemoryStream ms = new();
                         bf.Serialize(ms, sa);
                         return ms.ToArray();
-                    } catch (Exception e) {
+                    } catch (Exception) {
                         return null;
                     }
                 default:
@@ -62,7 +62,7 @@ namespace FancyToys.Utils {
                     try {
                         o = fromBytes<T>(bytes);
                         return true;
-                    } catch (Exception e) {
+                    } catch (Exception) {
                         success = parseJson(Consts.Encoding.GetString(bytes), out o);
                         return success;
                     }
@@ -80,7 +80,7 @@ namespace FancyToys.Utils {
                         ms.Position = 0;
                         sa = bf.Deserialize(ms) as List<T>;
                         return true;
-                    } catch (Exception e) {
+                    } catch (Exception) {
                         sa = null;
                         return false;
                     }

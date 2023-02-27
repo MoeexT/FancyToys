@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,13 +54,11 @@ namespace FancyToys.Service.Nursery {
             Dogger.Debug("InformationManager started.");
 
             do {
-                IEnumerable<KeyValuePair<int, NurseryItem>> linq = _nurseryView.NurseryList
-                    .Where(item => item.IsAlive)
-                    .Select(item => new KeyValuePair<int, NurseryItem>(item.NurseryId, item));
+                var aliveProcesses = new Dictionary<int, ProcessStatistic>();
 
-                Dictionary<int, ProcessStatistic> aliveProcesses = linq.ToDictionary(
-                    item => item.Key,
-                    item => item.Value.Statistic());
+                foreach (NurseryItem item in _nurseryView.NurseryList.ToList().Where(item => item.IsAlive)) {
+                    aliveProcesses[item.NurseryId] = item.Statistic();
+                }
 
                 goon = aliveProcesses.Count > 0;
 

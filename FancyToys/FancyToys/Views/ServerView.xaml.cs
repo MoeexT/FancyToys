@@ -55,8 +55,6 @@ namespace FancyToys.Views {
         }
 
         public async void PrintLog(LogStruct ls) {
-            Debug.WriteLine("PrintLog");
-
             DispatcherQueue.TryEnqueue(() => {
                 Color color = Consts.LogForegroundColors[ls.Level];
                 bool highlight = Consts.HighlightedLogLevels.Contains(ls.Level);

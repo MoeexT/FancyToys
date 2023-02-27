@@ -7,43 +7,58 @@
     mc:Ignorable="d">
 
     <Grid>
-        <ToggleSwitch x:Name="NurseryToggleSwitch"
-                      FontSize="14"
-                      IsOn="{x:Bind IsAlive, Mode=OneWay}"
-                      Tag="{x:Bind NurseryId}"
-                      OnContent="{x:Bind SwitchOnContent}"
-                      OffContent="{x:Bind SwitchOffContent}"
-                      ToolTipService.ToolTip="{x:Bind FilePath}"
-                      Toggled="NurseryToggleSwitch_OnToggled">
-            <ToggleSwitch.ContextFlyout>
-                <MenuFlyout>
-                    <MenuFlyoutItem x:Name="ArgumentFlyoutItem"
-                                    Tag="{x:Bind NurseryId}"
-                                    Text="添加参数"
-                                    Click="ArgsFlyoutItem_OnClick">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE723;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem x:Name="CopyPathFlyoutItem"
-                                    Tag="{x:Bind NurseryId}"
-                                    Text="复制路径"
-                                    ToolTipService.ToolTip="{x:Bind FilePath}"
-                                    Click="CopyPathFlyoutItem_OnClick">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE8C8;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem x:Name="DeleteFlyoutItem"
-                                    Tag="{x:Bind NurseryId}"
-                                    Text="删除"
-                                    Click="DeleteFlyoutItem_OnClick">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon Glyph="&#xE74D;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                </MenuFlyout>
-            </ToggleSwitch.ContextFlyout>
-        </ToggleSwitch>
+        <Border>
+            <StackPanel Orientation="Horizontal">
+                <Border>
+                    <ToggleSwitch FontSize="14"
+                                  MinHeight="42"
+                                  Height="42"
+                                  MinWidth="40"
+                                  Width="40"
+                                  IsOn="{x:Bind IsAlive, Mode=TwoWay}"
+                                  Tag="{x:Bind NurseryId}"
+                                  OnContent=""
+                                  OffContent=""
+                                  ToolTipService.ToolTip="{x:Bind FilePath}">
+                    </ToggleSwitch>
+                </Border>
+
+                <Border>
+                    <TextBlock Text="{x:Bind SwitchContent}"
+                               Margin="10 9 0 0"
+                               FontSize="15"
+                               Width="233"
+                               DoubleTapped="ArgsFlyoutItem_OnClick">
+                        <TextBlock.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Tag="{x:Bind NurseryId}"
+                                                Text="添加参数"
+                                                Click="ArgsFlyoutItem_OnClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE723;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Tag="{x:Bind NurseryId}"
+                                                Text="复制路径"
+                                                ToolTipService.ToolTip="{x:Bind FilePath}"
+                                                Click="CopyPathFlyoutItem_OnClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Tag="{x:Bind NurseryId}"
+                                                Text="删除"
+                                                Click="DeleteFlyoutItem_OnClick">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </TextBlock.ContextFlyout>
+                    </TextBlock>
+                </Border>
+
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

@@ -1,27 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 using FancyToys.Views;
 
 using NLog;
-
-using LogLevel = FancyToys.Logging.LogLevel;
 
 
 namespace FancyToys.Logging {
 
     public static class Dogger {
 
-        public static LogLevel LogLevel { get; set; } = LogLevel.Trace;
+        public static LogLevel LogLevel { get; set; }
         public static StdType StdLevel { get; set; }
 
-        // TODO 放到一个队列里
+        private static readonly Logger NLogger;
         private static readonly Queue<LogStruct> _logCache;
         private static readonly Queue<StdStruct> _stdCache;
-
-        private static readonly NLog.Logger NLogger;
 
         static Dogger() {
             _logCache = new Queue<LogStruct>();
@@ -29,29 +27,53 @@ namespace FancyToys.Logging {
             NLogger = LogManager.GetCurrentClassLogger();
         }
 
-        public static void Trace(string msg, int depth = 1) => Show(msg, LogLevel.Trace, depth + 1);
+        public static void Trace(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Trace(msg);
+            Show(msg, LogLevel.Trace, cp, cmn);
+        }
 
-        public static void Debug(string msg, int depth = 1) => Show(msg, LogLevel.Debug, depth + 1);
+        public static void Debug(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Debug(msg);
+            Show(msg, LogLevel.Debug, cp, cmn);
+        }
 
-        public static void Info(string msg, int depth = 1) => Show(msg, LogLevel.Info, depth + 1);
+        public static void Info(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Info(msg);
+            Show(msg, LogLevel.Info, cp, cmn);
+        }
 
-        public static void Warn(string msg, int depth = 1) => Show(msg, LogLevel.Warn, depth + 1);
+        public static void Warn(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Warn(msg);
+            Show(msg, LogLevel.Warn, cp, cmn);
+        }
 
-        public static void Error(string msg, int depth = 1) => Show(msg, LogLevel.Error, depth + 1);
+        public static void Error(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Error(msg);
+            Show(msg, LogLevel.Error, cp, cmn);
+        }
 
-        public static void Fatal(string msg, int depth = 1) => Show(msg, LogLevel.Fatal, depth + 1);
+        public static void Fatal(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
+            NLogger.Fatal(msg);
+            Show(msg, LogLevel.Fatal, cp, cmn);
+        }
 
-        private static void Show(string s, LogLevel level, int depth) {
-            if (level < LogLevel) return;
+        private static void Show(string s, LogLevel level, string callerFilePath, string callerMemberName) {
+            if (level < LogLevel || string.IsNullOrEmpty(s)) {
+                return;
+            }
 
             Dispatch(new LogStruct {
                 Level = level,
-                Source = $"[{CallerName(depth + 1)}]",
+                Source = $"[{Path.GetFileNameWithoutExtension(callerFilePath)}.{callerMemberName}]",
                 Content = s,
             });
         }
 
         public static void StdOutput(int pid, string msg) {
+            if (StdLevel == StdType.Error) {
+                return;
+            }
+
             Dispatch(
                 new StdStruct {
                     Level = StdType.Output,
@@ -82,7 +104,6 @@ namespace FancyToys.Logging {
         }
 
         private static void Dispatch(LogStruct log) {
-            NLogger.Info(log.ToString());
             if (ServerView.CurrentInstance != null) {
                 ServerView.CurrentInstance.PrintLog(log);
             } else {
@@ -98,6 +119,7 @@ namespace FancyToys.Logging {
             }
         }
 
+        [Obsolete]
         private static string CallerName(int depth) {
             MethodBase method = new StackTrace().GetFrame(depth)?.GetMethod();
             return $"{method?.ReflectedType?.Name}.{method?.Name}";
