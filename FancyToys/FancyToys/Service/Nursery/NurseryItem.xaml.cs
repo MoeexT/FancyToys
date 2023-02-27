@@ -65,12 +65,18 @@ namespace FancyToys.Service.Nursery {
         public bool IsAlive {
             get => _isAlive;
             private set {
+                // process is already running or stopped
+                if (value == _isAlive) {
+                    Dogger.Error($"Invalid process state, value: {value}");
+                    return;
+                }
+                _isAlive = value;
+
                 if (value) {
-                    Launch();
+                    Task.Run(Launch);
                 } else {
                     Stop();
                 }
-                _isAlive = value;
             }
         }
 
@@ -131,10 +137,6 @@ namespace FancyToys.Service.Nursery {
                 Dogger.Error(e.ToString());
                 return new ProcessStatistic(NurseryId, 0, Alias, 0, 0);
             }
-
-            item = new NurseryItem(process);
-
-            return true;
         }
 
         /// <summary>
@@ -143,12 +145,6 @@ namespace FancyToys.Service.Nursery {
         /// <returns></returns>
         private void Launch() {
             Dogger.Trace($"Launching {Alias}");
-
-            // process is already running
-            if (IsAlive) {
-                Dogger.Error($"Process {Alias} is running.");
-                return;
-            }
 
             // caught process
             if (_dissociative) {
@@ -203,12 +199,8 @@ namespace FancyToys.Service.Nursery {
         /// Stop the process.
         /// </summary>
         public void Stop() {
-            if (IsAlive) {
-                _nurseryProcess.Kill();
-                Dogger.Info("Process killed.");
-            } else {
-                Dogger.Warn($"Process {Alias}({NurseryId}) already exited.");
-            }
+            _nurseryProcess.Kill();
+            Dogger.Info("Process killed.");
         }
 
         public async Task<bool> Delete() {
@@ -284,7 +276,7 @@ namespace FancyToys.Service.Nursery {
         private void OnProcessOnExited(object sender, EventArgs _) {
             lock (_launchLock) {
                 _isAlive = false;
-                DispatcherQueue.TryEnqueue(() => OnPropertyChanged());
+                DispatcherQueue.TryEnqueue(() => OnPropertyChanged(nameof(IsAlive)));
             }
 
             OnProcessExited?.Invoke(this);

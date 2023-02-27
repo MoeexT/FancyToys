@@ -58,7 +58,7 @@ namespace FancyToys.Logging {
         }
 
         private static void Show(string s, LogLevel level, string callerFilePath, string callerMemberName) {
-            if (level < LogLevel) {
+            if (level < LogLevel || string.IsNullOrEmpty(s)) {
                 return;
             }
 
