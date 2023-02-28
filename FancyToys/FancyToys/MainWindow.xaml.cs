@@ -106,8 +106,17 @@ namespace FancyToys {
             }
         }
 
-        private static void OnAppClosing(AppWindow window, AppWindowClosingEventArgs e) {
-            NurseryView.Instance.OnClosing();
+        private async void OnAppClosing(AppWindow window, AppWindowClosingEventArgs e) {
+            e.Cancel = true;
+            if (NurseryView.Instance is not null) {
+                NurseryView.Instance.OnClosing();
+            }
+
+            if (TeleportView.Instance is not null) {
+                await TeleportView.Instance.OnClosing();
+            }
+            
+            Close();
         }
 
         private AppWindow GetAppWindowForCurrentWindow() {

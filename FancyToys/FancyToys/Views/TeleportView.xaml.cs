@@ -1,24 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using System.Timers;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
-using Microsoft.UI;
+using CommunityToolkit.WinUI.Helpers;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
+
+using MemoryPack;
 
 using FancyToys.Logging;
 using FancyToys.Utils;
 using FancyToys.Service.Teleport;
 
 
+// ReSharper disable ConvertToConstant.Local
+// ReSharper disable FieldCanBeMadeReadOnly.Local
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -28,45 +34,16 @@ namespace FancyToys.Views {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class TeleportView: Page {
+    public sealed partial class TeleportView {
 
-        [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
-        private ObservableCollection<ClipItem> ClipList;
-        private bool _allowClip;
-        private bool _allowSimilarWithFormer;
+        public static TeleportView Instance { get; private set; }
+
         private readonly Messenger _teleportServer;
+        private readonly ApplicationDataContainer _dataContainer;
+        private ObservableCollection<ClipItem> ClipList = new();
 
-        private static readonly FontIcon _ConnectedIcon = new() {
-            Glyph = "\xF0B9",
-            FontSize = 18,
-            Foreground = new SolidColorBrush(Colors.LightGreen),
-        };
-        private static readonly FontIcon _DisconnectedIcon = new() {
-            Glyph = "\xF384",
-            FontSize = 18,
-            Foreground = new SolidColorBrush(Colors.Red),
-        };
-        private static readonly ProgressRing _ConnectingIcon = new() {
-            Width = 25,
-            Height = 25,
-            IsActive = true,
-        };
-
-        private string TeleportServerIP {
-            get => (string)ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerIP)] ?? string.Empty;
-            set {
-                _teleportServer.IP = value;
-                ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerIP)] = value;
-            }
-        }
-
-        private int TeleportServerPort {
-            get => (int)(ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerPort)] ?? 0);
-            set {
-                _teleportServer.Port = value;
-                ApplicationData.Current.LocalSettings.Values[nameof(TeleportServerPort)] = value;
-            }
-        }
+        private Timer _timer;
+        private bool _allowSpanClip = true;
 
         public TeleportView() {
             /*
@@ -75,11 +52,8 @@ namespace FancyToys.Views {
              * wifi,
              * 
              */
+            _dataContainer = ApplicationData.Current.LocalSettings.CreateContainer(nameof(TeleportView), ApplicationDataCreateDisposition.Always);
             InitializeComponent();
-
-            _allowClip = true;
-            bool allowSpanClip = true;
-            ClipList = new ObservableCollection<ClipItem>();
             TestConnectionStatusContainer.Child = _DisconnectedIcon;
 
             _teleportServer = new Messenger() {
@@ -87,68 +61,127 @@ namespace FancyToys.Views {
                 Port = TeleportServerPort,
             };
 
-            _teleportServer.OnServerConnected += () => {
-                TestConnectionStatusContainer.Child = _ConnectedIcon;
-            };
+            _teleportServer.OnServerConnected += () => TestConnectionStatusContainer.Child = _ConnectedIcon;
             LoadClipboardHistory();
 
-            Timer timer = new() {
+            _timer = new Timer {
                 AutoReset = true,
                 Interval = 500,
             };
 
-            timer.Elapsed += (_, _) => {
+            _timer.Elapsed += (_, _) => {
                 Dogger.Trace("timer elapsed");
-                allowSpanClip = true;
-                timer.Stop();
+                _allowSpanClip = true;
+                _timer.Stop();
             };
 
-            Clipboard.ContentChanged += async (_, _) => {
-                if (!_allowClip || !allowSpanClip) return;
+            Clipboard.ContentChanged += OnClipboardContentChanged;
 
-                ClipItem former = ClipList[0];
-                ClipItem newItem = await CreateContent(Clipboard.GetContent());
+            Instance = this;
+        }
 
-                // set clip content failed
-                if (newItem is null) {
-                    Dogger.Trace("invalid clip item");
-                    return;
-                }
+        private async void OnClipboardContentChanged(object o, object o1) {
+            if (!AllowClip || !_allowSpanClip) return;
+            _allowSpanClip = false;
 
-                // check whether this content is equal with former's.
-                if (!_allowSimilarWithFormer && former is not null && former.Equals(newItem)) {
-                    Dogger.Debug("equal with former");
-                    return;
-                }
+            ClipItem former = ClipList.Count > 0 ? ClipList[0] : null;
+            ClipItem newItem = await CreateContent(Clipboard.GetContent());
 
-                timer.Start();
-                allowSpanClip = false;
-                ClipList.Insert(0, newItem);
-            };
+            // set clip content failed
+            if (newItem is null) {
+                Dogger.Trace("Invalid clip item");
+                return;
+            }
+
+            // check whether this content is equal with former's.
+            if (!AllowSimilarWithFormer && former is not null && former.Equals(newItem)) {
+                Dogger.Debug("Content is equal with former");
+                return;
+            }
+
+            _timer.Start();
+            ClipList.Insert(0, newItem);
         }
 
         private async void LoadClipboardHistory() {
-            ClipboardHistoryItemsResult list = await Clipboard.GetHistoryItemsAsync();
+            if (LoadSystemClipboard) {
+                // load from system clipboard list
+                ClipboardHistoryItemsResult list = await Clipboard.GetHistoryItemsAsync();
 
-            foreach (ClipboardHistoryItem item in list.Items) {
-                ClipList.Add(await CreateContent(item.Content));
+                foreach (ClipboardHistoryItem item in list.Items) {
+                    ClipItem clip = await CreateContent(item.Content);
+
+                    if (clip is not null) {
+                        ClipList.Add(clip);
+                    }
+                }
+
+                Dogger.Info($"Load {list.Items.Count} items from system clipboard.");
+            } else {
+                // load serialized clipboard items CreateFileAsync("clipboards.cache", CreationCollisionOption.ReplaceExisting);
+                if (!await ApplicationData.Current.LocalFolder.FileExistsAsync("clipboards.cache")) {
+                    Dogger.Warn("Cache file not exist.");
+                    return;
+                }
+
+                StorageFile file = await ApplicationData.Current.LocalFolder.GetFileAsync("clipboards.cache");
+                IBuffer buf = await FileIO.ReadBufferAsync(file);
+                byte[] clipAsh = buf.ToArray();
+
+                if (clipAsh is null || clipAsh.Length == 0) {
+                    Dogger.Warn("Load clipboard items failed: ash is null or empty.");
+                    return;
+                }
+
+                try {
+                    var list = await MemoryPackSerializer.DeserializeAsync<List<ClipItemStruct>>(new MemoryStream(clipAsh));
+
+                    if (list is null || list.Count == 0) {
+                        Dogger.Info("Clipboard list is empty.");
+                        return;
+                    }
+
+                    foreach (ClipItemStruct cis in list) {
+                        Dogger.Debug(cis.ToString());
+                        ClipItem item = new();
+
+                        if (await item.SetContent(cis)) {
+                            ClipList.Add(item);
+                        }
+                    }
+                    Dogger.Info($"Load {list.Count} serialized clipboard items.");
+                } catch (Exception e) {
+                    Dogger.Fatal($"Error deserializing clip items: {e.Message}");
+                }
             }
         }
 
-        private async Task<ClipItem> CreateContent(DataPackageView package) {
-            ClipItem newer = new() {
-                TeleportServer = _teleportServer
-            };
+        public async Task OnClosing() {
+            ClipItemStruct[] list = await Task.WhenAll(ClipList.Select(item => item.GetStruct()));
+            StorageFile file = await ApplicationData.Current.LocalFolder.CreateFileAsync("clipboards.cache", CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteBytesAsync(file, MemoryPackSerializer.Serialize(list.ToList()));
+            Dogger.Info($"Saved {list.Length} clip items.");
+        }
 
-            if (!await newer.SetContent(package)) {
+        private async Task<ClipItem> CreateContent(DataPackageView package) {
+            try {
+                ClipItem newer = new() {
+                    TeleportServer = _teleportServer
+                };
+
+                if (!await newer.SetContent(package)) {
+                    return null;
+                }
+
+                newer.OnDelete += (item) => {
+                    ClipList.Remove(item);
+                };
+
+                return newer;
+            } catch (Exception e) {
+                Dogger.Error($"Error adding clipboard item: {e.Message}");
                 return null;
             }
-
-            newer.OnDelete += (item) => {
-                ClipList.Remove(item);
-            };
-
-            return newer;
         }
 
         // CommandBar's Button events
@@ -182,16 +215,6 @@ namespace FancyToys.Views {
 
         // CommandBar's secondary switch button events
         // --------------------------------------------------------------------------------------------
-
-        private void ListenSwitch_OnToggled(object sender, RoutedEventArgs e) {
-            if (sender is not AppBarToggleButton ts) return;
-            _allowClip = ts.IsChecked ?? false;
-        }
-
-        private void CheckSimilarSwitch_OnToggled(object sender, RoutedEventArgs e) {
-            if (sender is not AppBarToggleButton tb) return;
-            _allowSimilarWithFormer = tb.IsChecked ?? false;
-        }
 
         private void ClearButton_OnClick(object sender, RoutedEventArgs e) {
             List<ClipItem> removeList = ClipList.Where(clipListItem => !clipListItem.Pinned).ToList();
