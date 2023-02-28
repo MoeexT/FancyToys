@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -76,9 +75,11 @@ namespace FancyToys {
                 FileName = "${specialfolder:folder=LocalApplicationData}/" + _logFileName,
                 Layout = "${longdate} ${level} ${message} ${exception}"
             };
-            DebuggerTarget logDebugger = new("logdebugger");
-            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logDebugger);
+            DebuggerTarget logDebugger = new("logdebugger") {
+                Layout = "${longdate} ${level} ${message} ${exception}"
+            };
             config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logFile);
+            config.AddRule(NLog.LogLevel.Trace, NLog.LogLevel.Fatal, logDebugger);
             NLog.LogManager.Configuration = config;
             Dogger.Info("FancyToys started.");
 
@@ -88,7 +89,7 @@ namespace FancyToys {
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(AppTitleBar); // this line is optional as by it is null by default
 
-            // _ = new ServerView();
+            _ = new ServerView();
             _ = new TinyToolsView();
             _ = new SettingsView();
 
@@ -106,8 +107,17 @@ namespace FancyToys {
             }
         }
 
-        private static void OnAppClosing(AppWindow window, AppWindowClosingEventArgs e) {
-            NurseryView.Instance.OnClosing();
+        private async void OnAppClosing(AppWindow window, AppWindowClosingEventArgs e) {
+            e.Cancel = true;
+            if (NurseryView.Instance is not null) {
+                NurseryView.Instance.OnClosing();
+            }
+
+            if (TeleportView.Instance is not null) {
+                await TeleportView.Instance.OnClosing();
+            }
+            
+            Close();
         }
 
         private AppWindow GetAppWindowForCurrentWindow() {

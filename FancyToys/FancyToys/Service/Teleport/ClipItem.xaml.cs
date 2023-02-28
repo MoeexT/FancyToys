@@ -27,14 +27,8 @@ using Microsoft.UI.Xaml.Media;
 namespace FancyToys.Service.Teleport {
 
     public sealed partial class ClipItem {
-        public enum ClipType {
-            Text = 0,
-            Image = 1,
-            File = 2,
-            Uri = 3,
-        }
 
-        public delegate void OnDeleteButtonClicked(Service.Teleport.ClipItem item);
+        public delegate void OnDeleteButtonClicked(ClipItem item);
         public event OnDeleteButtonClicked OnDelete;
 
         public Messenger TeleportServer;
@@ -263,7 +257,7 @@ namespace FancyToys.Service.Teleport {
         }
 
         public new bool Equals(object obj) {
-            if (obj is not Service.Teleport.ClipItem another) {
+            if (obj is not ClipItem another) {
                 Dogger.Info(obj.ToString());
                 return false;
             }
@@ -336,7 +330,7 @@ namespace FancyToys.Service.Teleport {
             }))());
             sb.AppendLine(ClipText);
             sb.AppendLine(ClipUri?.ToString());
-            sb.Append(ClipImageStream?.ToString());
+            sb.Append(ClipImageStream);
 
             return $"$ClipListItem {{ Type: {ContentType}, ActualContent: {actualContent}\nContent: \"{sb.ToString()}\" }}";
         }
