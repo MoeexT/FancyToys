@@ -31,7 +31,6 @@
         <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     </PropertyGroup>-->
     <ItemGroup>
-        <None Remove="Controls\ClipListItem.xaml" />
         <None Remove="Images\LockScreenLogo.scale-200.png" />
         <None Remove="Images\SplashScreen.scale-200.png" />
         <None Remove="Images\Square150x150Logo.scale-200.png" />
@@ -64,20 +63,14 @@
         <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2" />
         <PackageReference Include="MemoryPack" Version="1.9.13" />
         <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.0" />
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.2.221209.1" />
-        <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.1" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.2.230217.4" />
+        <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
         <PackageReference Include="NAudio" Version="2.1.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="NLog" Version="5.0.4" />
         <PackageReference Include="PInvoke.User32" Version="0.7.124" />
         <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
         <Manifest Include="$(ApplicationManifest)" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Page Update="Controls\ClipListItem.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </Page>
     </ItemGroup>
 
     <ItemGroup>
