@@ -27,44 +27,50 @@ namespace FancyToys.Logging {
             NLogger = LogManager.GetCurrentClassLogger();
         }
 
-        public static void Trace(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Trace(msg);
-            Show(msg, LogLevel.Trace, cp, cmn);
+        public static void Trace(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Trace, caller);
         }
 
-        public static void Debug(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Debug(msg);
-            Show(msg, LogLevel.Debug, cp, cmn);
+        public static void Debug(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Debug, caller);
         }
 
-        public static void Info(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Info(msg);
-            Show(msg, LogLevel.Info, cp, cmn);
+        public static void Info(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Info, caller);
         }
 
-        public static void Warn(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Warn(msg);
-            Show(msg, LogLevel.Warn, cp, cmn);
+        public static void Warn(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Warn, caller);
         }
 
-        public static void Error(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Error(msg);
-            Show(msg, LogLevel.Error, cp, cmn);
+        public static void Error(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Error, caller);
         }
 
-        public static void Fatal(string msg, [CallerFilePath] string cp = null, [CallerMemberName] string cmn = null) {
-            NLogger.Fatal(msg);
-            Show(msg, LogLevel.Fatal, cp, cmn);
+        public static void Fatal(string msg, [CallerFilePath] string callerPath = null, [CallerMemberName] string callerMemberName = null) {
+            string caller = $"[{Path.GetFileNameWithoutExtension(callerPath)}.{callerMemberName}]";
+            NLogger.Trace($"{caller} {msg}");
+            Show(msg, LogLevel.Fatal, caller);
         }
 
-        private static void Show(string s, LogLevel level, string callerFilePath, string callerMemberName) {
+        private static void Show(string s, LogLevel level, string caller) {
             if (level < LogLevel || string.IsNullOrEmpty(s)) {
                 return;
             }
 
             Dispatch(new LogStruct {
                 Level = level,
-                Source = $"[{Path.GetFileNameWithoutExtension(callerFilePath)}.{callerMemberName}]",
+                Source = caller,
                 Content = s,
             });
         }
