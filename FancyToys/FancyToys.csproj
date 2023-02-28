@@ -11,6 +11,10 @@
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
         <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
         <PublishProfile>Properties\PublishProfiles\win10-$(Platform).pubxml</PublishProfile>
+        <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+        <PackageCertificateThumbprint>976F0BFB623175C9E6B757713E04F62600D2473D</PackageCertificateThumbprint>
+        <PackageCertificateKeyFile>FancyToys_TemporaryKey.pfx</PackageCertificateKeyFile>
+        <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     </PropertyGroup>
     <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
         <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
