@@ -67,7 +67,7 @@ namespace FancyToys {
                 },
             };
             InitializeComponent();
-            NavView.SelectedItem = Categories.First();
+            NavView.SelectedItem = Categories[0];
 
             LoggingConfiguration config = new();
 
