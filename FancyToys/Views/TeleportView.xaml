@@ -31,6 +31,7 @@
                         <AppBarToggleButton Label="Listen" IsChecked="{x:Bind AllowClip, Mode=TwoWay}" />
                         <AppBarToggleButton Label="Allow similar" IsChecked="{x:Bind AllowSimilarWithFormer, Mode=TwoWay}" />
                         <AppBarToggleButton Label="Load system clipboard" IsChecked="{x:Bind LoadSystemClipboard, Mode=TwoWay}" />
+                        <AppBarSeparator />
                         <AppBarButton Label="Clear" Click="ClearButton_OnClick">
                             <AppBarButton.KeyboardAccelerators>
                                 <KeyboardAccelerator Modifiers="Control" Key="L" />

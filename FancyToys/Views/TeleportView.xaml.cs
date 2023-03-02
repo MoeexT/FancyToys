@@ -143,10 +143,10 @@ namespace FancyToys.Views {
 
                     foreach (ClipItemStruct cis in list) {
                         Dogger.Debug(cis.ToString());
-                        ClipItem item = new();
+                        ClipItem clip = await CreateContent(cis);
 
-                        if (await item.SetContent(cis)) {
-                            ClipList.Add(item);
+                        if (clip is not null) {
+                            ClipList.Add(clip);
                         }
                     }
                     Dogger.Info($"Load {list.Count} serialized clipboard items.");
@@ -163,13 +163,26 @@ namespace FancyToys.Views {
             Dogger.Info($"Saved {list.Length} clip items.");
         }
 
-        private async Task<ClipItem> CreateContent(DataPackageView package) {
+        private async Task<ClipItem> CreateContent(object content) {
             try {
                 ClipItem newer = new() {
                     TeleportServer = _teleportServer
                 };
 
-                if (!await newer.SetContent(package)) {
+                bool success;
+
+                switch (content) {
+                    case DataPackageView package:
+                        success = await newer.SetContent(package);
+                        break;
+                    case ClipItemStruct cis:
+                        success = await newer.SetContent(cis);
+                        break;
+                    default:
+                        return null;
+                }
+
+                if (!success) {
                     return null;
                 }
 
