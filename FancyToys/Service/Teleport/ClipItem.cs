@@ -16,6 +16,9 @@ using Windows.Storage.Streams;
 using Windows.UI;
 using Windows.UI.Text;
 
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Shapes;
+
 using FancyToys.Logging;
 
 
@@ -196,20 +199,31 @@ public partial class ClipItem {
         }));
     }
 
-    private async Task<Image> CreateImage(RandomAccessStreamReference streamReference) {
+    private async Task<FrameworkElement> CreateImage(RandomAccessStreamReference streamReference) {
         ClipImageStream = streamReference;
         using IRandomAccessStreamWithContentType stream = await streamReference.OpenReadAsync();
         BitmapImage bi = new();
         bi.SetSource(stream);
         Dogger.Debug("Create clipboard image.");
 
-        return new Image {
-            Source = bi,
+        StackPanel panel = new() {
+            Orientation = Orientation.Horizontal,
+        };
+
+        panel.Children.Add(new Image {
             Height = 70,
+            Source = bi,
             Stretch = Stretch.Uniform,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Stretch,
-        };
+        });
+
+        panel.Children.Add(new Rectangle() {
+            Width = 350,
+            Fill = new SolidColorBrush(Colors.Transparent)
+        });
+
+        return panel;
     }
 
     private TextBlock CreateTextBlock(string path) {
