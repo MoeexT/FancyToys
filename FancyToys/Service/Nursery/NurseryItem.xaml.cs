@@ -165,6 +165,7 @@ namespace FancyToys.Service.Nursery {
                     return;
                 }
                 _isAlive = true;
+                DispatcherQueue.TryEnqueue(() => OnPropertyChanged(nameof(SwitchContent)));
             }
 
             // TODO InvalidOperationException: process has exited.
@@ -272,7 +273,10 @@ namespace FancyToys.Service.Nursery {
         private void OnProcessOnExited(object sender, EventArgs _) {
             lock (_launchLock) {
                 _isAlive = false;
-                DispatcherQueue.TryEnqueue(() => OnPropertyChanged(nameof(IsAlive)));
+                DispatcherQueue.TryEnqueue(() => {
+                    OnPropertyChanged(nameof(IsAlive));
+                    OnPropertyChanged(nameof(SwitchContent));
+                });
             }
 
             OnProcessExited?.Invoke(this);
