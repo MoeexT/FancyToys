@@ -146,15 +146,6 @@ namespace FancyToys.Service.Nursery {
         private void Launch() {
             Dogger.Trace($"Launching {Alias}");
 
-            // caught process
-            if (_dissociative) {
-                if (string.IsNullOrEmpty(FilePath)) {
-                    Dogger.Error($"Caught process {Alias} cannot be launched.");
-                    return;
-                }
-                InitializeProcess();
-            }
-
             // if this process had been redirected std-ioe, cancel first
             if (RedirectIOE) {
                 try {
@@ -251,6 +242,11 @@ namespace FancyToys.Service.Nursery {
         }
 
         private async void ArgsFlyoutItem_OnClick(object sender, RoutedEventArgs e) {
+            if (IsAlive) {
+                Dogger.Warn("Running process cannot attach arguments.");
+                return;
+            }
+            
             InputDialog inputDialog = new("Nursery", "输入参数", _nurseryProcess.StartInfo.Arguments) {
                 XamlRoot = XamlRoot,
             };
@@ -281,6 +277,15 @@ namespace FancyToys.Service.Nursery {
 
             OnProcessExited?.Invoke(this);
             Dogger.Trace("Process exited." + Alias);
+
+            // caught process
+            if (_dissociative) {
+                if (string.IsNullOrEmpty(FilePath)) {
+                    Dogger.Error($"Caught process {Alias} cannot be initialized.");
+                    return;
+                }
+                InitializeProcess();
+            }
         }
 
         public override string ToString() =>

@@ -17,6 +17,7 @@ namespace FancyToys.Logging {
         public static LogLevel LogLevel { get; set; }
         public static StdType StdLevel { get; set; }
 
+        private static bool _logPanelLoaded;
         private static readonly Logger NLogger;
         private static readonly Queue<LogStruct> _logCache;
         private static readonly Queue<StdStruct> _stdCache;
@@ -100,6 +101,7 @@ namespace FancyToys.Logging {
         }
 
         public static void Flush() {
+            _logPanelLoaded = true;
             while (_logCache.Count > 0) {
                 Dispatch(_logCache.Dequeue());
             }
@@ -110,7 +112,7 @@ namespace FancyToys.Logging {
         }
 
         private static void Dispatch(LogStruct log) {
-            if (ServerView.CurrentInstance != null) {
+            if (_logPanelLoaded) {
                 ServerView.CurrentInstance.PrintLog(log);
             } else {
                 _logCache.Enqueue(log);
@@ -118,7 +120,7 @@ namespace FancyToys.Logging {
         }
 
         private static void Dispatch(StdStruct ss) {
-            if (ServerView.CurrentInstance != null) {
+            if (_logPanelLoaded) {
                 ServerView.CurrentInstance.PrintStd(ss);
             } else {
                 _stdCache.Enqueue(ss);
