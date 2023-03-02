@@ -24,7 +24,7 @@
                 </Border>
 
                 <Border>
-                    <TextBlock Text="{x:Bind SwitchContent}"
+                    <TextBlock Text="{x:Bind SwitchContent, Mode=OneWay}"
                                Margin="10 9 0 0"
                                FontSize="15"
                                Width="233"
