@@ -1,9 +1,7 @@
-﻿
+
 # FancyToys
 
 A list of personal tools.
-
----------------------------------
 
 ## Components
 
