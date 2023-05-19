@@ -104,7 +104,7 @@ namespace FancyToys.Views {
             Brush originHeaderForeground = header!.Foreground;
             StdLevelComboBox.Foreground = item!.Foreground;
             header.Foreground = originHeaderForeground;
-            Dogger.StdLevel = item.Content is null ? StdLevel : (StdType)item.Content;
+            StdLevel = (StdType)(item.Content ?? StdLevel);
         }
 
         private int IndexOfLogLevels() {

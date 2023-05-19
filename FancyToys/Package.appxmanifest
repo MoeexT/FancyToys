@@ -9,7 +9,7 @@
   <Identity
     Name="6b3ac455-782d-4a35-9ef0-d87b0ae61357"
     Publisher="CN=MoeexT"
-    Version="0.1.1.0" />
+    Version="0.5.1.1" />
 
   <Properties>
     <DisplayName>FancyToys (Package)</DisplayName>

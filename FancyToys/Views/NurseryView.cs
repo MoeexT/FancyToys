@@ -79,6 +79,7 @@ namespace FancyToys.Views {
             }
 
             items.ForEach(nis => {
+                Dogger.Debug(nis.ToString());
                 if (!nis.IsAlive || !AddProcess(nis.NurseryId, nis.FilePath, nis.Arguments)) {
                     AddFile(nis.FilePath, nis.Arguments);
                 }

@@ -248,7 +248,8 @@ namespace FancyToys.Service.Nursery {
                 return;
             }
             
-            InputDialog inputDialog = new("Nursery", "输入参数", _nurseryProcess.StartInfo.Arguments) {
+            InputDialog inputDialog = new("Nursery", "输入参数", 
+                string.IsNullOrEmpty(Arguments) ? _nurseryProcess.StartInfo.Arguments : Arguments) {
                 XamlRoot = XamlRoot,
             };
             // Value does not fall within the expected range
