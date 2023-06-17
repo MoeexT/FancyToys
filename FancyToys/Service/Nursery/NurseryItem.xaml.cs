@@ -231,6 +231,7 @@ namespace FancyToys.Service.Nursery {
             _nurseryProcess = new Process();
             _nurseryProcess.EnableRaisingEvents = true;
             _nurseryProcess.StartInfo.FileName = FilePath;
+            _nurseryProcess.StartInfo.Arguments = Arguments;
             _nurseryProcess.StartInfo.CreateNoWindow = true;
             _nurseryProcess.StartInfo.UseShellExecute = false;
             _nurseryProcess.StartInfo.RedirectStandardError = true;
