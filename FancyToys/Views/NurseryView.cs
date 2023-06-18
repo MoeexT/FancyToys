@@ -103,7 +103,7 @@ namespace FancyToys.Views {
             NurseryList.Add(item);
             item.OnProcessLaunched += (_) => _informationManager.run();
             item.OnItemDeleted += (ni) => NurseryList.Remove(ni);
-            Dogger.Info($"File path {pathName} add {NurseryList.Count}");
+            Dogger.Info($"File path {pathName} {arg} add ({NurseryList.Count} item left.)");
         }
 
         private bool AddProcess(int pid, string filePath = "", string arguments = "") {
